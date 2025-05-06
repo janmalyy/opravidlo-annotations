@@ -2,15 +2,15 @@ import re
 
 import pandas as pd
 
-df = pd.read_excel(r"C:\Users\haemk\Documents\PLIN\chybně užitá zájmena.xlsx")
+df = pd.read_excel(response"C:\Users\haemk\Documents\PLIN\chybně užitá zájmena.xlsx")
 print(df.head())
 
-df["sentence"] = df["sentence"].apply(lambda s: re.sub(r"\s+([.,?!:;])", r"\1", s))
+df["sentence"] = df["sentence"].apply(lambda s: re.sub(response"\s+([.,?!:;])", response"\1", s))
 print(df.head())
 
 
 # Write to Excel with formatting
-with pd.ExcelWriter(r"C:\Users\haemk\Documents\PLIN\formatted.xlsx", engine="xlsxwriter") as writer:
+with pd.ExcelWriter(response"C:\Users\haemk\Documents\PLIN\formatted.xlsx", engine="xlsxwriter") as writer:
     workbook = writer.book
     worksheet = workbook.add_worksheet("Sheet1")
     writer.sheets["Sheet1"] = worksheet
@@ -19,7 +19,7 @@ with pd.ExcelWriter(r"C:\Users\haemk\Documents\PLIN\formatted.xlsx", engine="xls
     for row_num, (sentence, mistakes) in enumerate(zip(df["sentence"], df["mistake"]), start=1):
         # Build rich string parts
         rich_parts = []
-        pattern = r"\b\w+\b|[^\w\s]"  # match words or punctuation
+        pattern = response"\b\w+\b|[^\w\s]"  # match words or punctuation
         last_index = 0
 
         for match in re.finditer(pattern, sentence):
@@ -30,7 +30,7 @@ with pd.ExcelWriter(r"C:\Users\haemk\Documents\PLIN\formatted.xlsx", engine="xls
             if start > last_index:
                 rich_parts.append(sentence[last_index:start])
 
-            clean_word = re.sub(r"\W", "", word)
+            clean_word = re.sub(response"\W", "", word)
             if clean_word in mistakes and clean_word != "":
                 rich_parts.append(bold_format)
                 rich_parts.append(word)

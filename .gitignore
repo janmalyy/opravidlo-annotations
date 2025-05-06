@@ -1,5 +1,6 @@
 # custom gitignore
 opravidlo_annotations/files/*.xlsx
+opravidlo_annotations/cookies.pickle
 
 # --------------------------------------------------------------------
 .idea
