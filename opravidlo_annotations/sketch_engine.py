@@ -1,3 +1,7 @@
+"""
+Sketch engine API documentation: https://www.sketchengine.eu/documentation/api-documentation/
+"""
+
 import requests
 
 from opravidlo_annotations import settings

@@ -1,6 +1,6 @@
 """
-https://github.com/czcorpus/kontext/wiki/API-Creating-a-concordance
-12 reqs/second; 5000/day
+Kontext API documentation: https://github.com/czcorpus/kontext/wiki/API-Creating-a-concordance
+limits: 12 requests/second; 5000 requests/day
 """
 
 import pickle
