@@ -1,3 +1,8 @@
+"""
+https://github.com/czcorpus/kontext/wiki/API-Creating-a-concordance
+12 reqs/second; 5000/day
+"""
+
 import pickle
 import logging
 
