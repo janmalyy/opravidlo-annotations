@@ -6,6 +6,7 @@ limits: 12 requests/second; 5000 requests/day
 import pickle
 import logging
 import json
+import re
 
 import requests
 
@@ -58,13 +59,15 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, shuffl
     else:
         shuffle_int = 0
 
+    query = "[word=\".*\"]"*20+query+"[word=\".*\"]"*20     # workaround: increases the left and the right context
+
     request_body = {
         "type": "concQueryArgs",
         "maincorp": corpus_name,
         "usesubcorp": None,
         "viewmode": "kwic",
-        "pagesize": 40,
-        "attrs": ["word", "tag"],       # a list of KWIC's positional attributes to be retrieved
+        "pagesize": 500,                # the number displayed concordances
+        "attrs": ["word"],              # a list of KWIC's positional attributes to be retrieved
         "ctxattrs": [],                 # a list of non-KWIC positional attributes to be retrieved
         "attr_vmode": "visible-kwic",
         "base_viewattr": "word",
@@ -79,7 +82,7 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, shuffl
                 "query": query,
                 "pcq_pos_neg": "pos",
                 "include_empty": False,
-                "default_attr": "word"  # a positional attribute applied for simplied CQL expressions (e.g. with default_attr="word" one can write "foo" instead of [word="foo"])
+                "default_attr": "word"  # a positional attribute applied for simplified CQL expressions (e.g., with default_attr="word" one can write "foo" instead of [word="foo"])
             }
         ],
         "text_types": {},
@@ -112,7 +115,11 @@ def view_concordance(session: requests.Session, op_id: str) -> dict:
     Returns:
         dict: Concordance result JSON.
     """
-    response = session.get(f"{kontext_api_point}/view", params={"format": "json", "q": f"~{op_id}"})
+    response = session.get(f"{kontext_api_point}/view", params={
+        "format": "json",
+        "q": f"~{op_id}",
+        "pagesize": 500,
+    })
     response.raise_for_status()
     return response.json()
 
@@ -128,10 +135,31 @@ def print_json(data: dict, indent: int = 4) -> None:
     print(json.dumps(data, indent=indent, ensure_ascii=False))
 
 
+def correct_punctuation(text: str) -> str:
+    """
+    Corrects punctuation in a string. It removes any trailing whitespaces before the punctuation mark.
+    """
+    return re.sub(r"\s+([.,?!:;])", r"\1", text)
+
+
 if __name__ == "__main__":
     corpus_name = "syn2015"
-    query = "[word=\"nininicsa\"]"
+    # query = "[word=\"yea\"]"  # OK
+    # query = "\"yea\""         # OK
+    # query = "yea"             # NOK
+    query = "[word=\"mám\"][word=\"velký\"][word=\"hlad\"]"
     session = setup_session()
     op_id = submit_query(session, corpus_name, query)
     concordance = view_concordance(session, op_id)
-    print_json(concordance)
+
+    lines = []
+    if not concordance["Lines"]:
+        print("No concordances found.")
+    else:
+        for each in concordance["Lines"]:
+            lines.append(each["Left"][0]["str"] + each["Kwic"][0]["str"] + each["Right"][0]["str"])
+        for line in lines:
+            line = correct_punctuation(line)
+            print(line)
+
+        # print_json(concordance)
