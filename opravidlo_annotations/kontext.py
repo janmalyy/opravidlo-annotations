@@ -5,6 +5,7 @@ limits: 12 requests/second; 5000 requests/day
 
 import pickle
 import logging
+import json
 
 import requests
 
@@ -39,38 +40,46 @@ def setup_session() -> requests.Session:
     return session
 
 
-def submit_query(session: requests.Session) -> str:
+
+def submit_query(session: requests.Session, corpus_name: str, query: str, shuffle: bool=True) -> str:
     """
     Submit a concordance query.
 
     Args:
         session (requests.Session): Authenticated session.
-
+        corpus_name (str): Corpus name, e.g. "syn2015".
+        query (str): CQL query.
+        shuffle (bool, optional): Shuffle the results. Defaults to True. It negatively affects performance.
     Returns:
         str: The concordance persistence operation ID.
     """
+    if shuffle:
+        shuffle_int = 1
+    else:
+        shuffle_int = 0
+
     request_body = {
         "type": "concQueryArgs",
-        "maincorp": "syn2015",
+        "maincorp": corpus_name,
         "usesubcorp": None,
         "viewmode": "kwic",
         "pagesize": 40,
-        "attrs": ["word", "tag"],
+        "attrs": ["word", "tag"],       # a list of KWIC's positional attributes to be retrieved
+        "ctxattrs": [],                 # a list of non-KWIC positional attributes to be retrieved
         "attr_vmode": "visible-kwic",
         "base_viewattr": "word",
-        "ctxattrs": [],
         "structs": ["text", "p", "g"],
         "refs": [],
         "fromp": 0,
-        "shuffle": 0,
+        "shuffle": shuffle_int,
         "queries": [
             {
                 "qtype": "advanced",
-                "corpname": "syn2015",
-                "query": "[word=\"celou\"] [lemma=\"pravda\"]",
+                "corpname": corpus_name,
+                "query": query,
                 "pcq_pos_neg": "pos",
                 "include_empty": False,
-                "default_attr": "word"
+                "default_attr": "word"  # a positional attribute applied for simplied CQL expressions (e.g. with default_attr="word" one can write "foo" instead of [word="foo"])
             }
         ],
         "text_types": {},
@@ -82,7 +91,7 @@ def submit_query(session: requests.Session) -> str:
             "fc_pos": [],
             "fc_pos_type": "all"
         },
-        "async": False
+        "async": True
     }
 
     response = session.post(f"{kontext_api_point}/query_submit?format=json", params={"format": "json"}, json=request_body)
@@ -108,8 +117,21 @@ def view_concordance(session: requests.Session, op_id: str) -> dict:
     return response.json()
 
 
+def print_json(data: dict, indent: int = 4) -> None:
+    """
+    Print JSON data with nice indentation.
+
+    Args:
+        data (dict): The JSON data to print.
+        indent (int, optional): Number of spaces for indentation. Defaults to 4.
+    """
+    print(json.dumps(data, indent=indent, ensure_ascii=False))
+
+
 if __name__ == "__main__":
+    corpus_name = "syn2015"
+    query = "[word=\"nininicsa\"]"
     session = setup_session()
-    op_id = submit_query(session)
+    op_id = submit_query(session, corpus_name, query)
     concordance = view_concordance(session, op_id)
-    print(concordance)
+    print_json(concordance)
