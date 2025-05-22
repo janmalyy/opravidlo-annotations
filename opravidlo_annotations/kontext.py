@@ -6,7 +6,6 @@ limits: 12 requests/second; 5000 requests/day
 import pickle
 import logging
 import json
-import re
 
 import requests
 
@@ -66,7 +65,7 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, shuffl
         "maincorp": corpus_name,
         "usesubcorp": None,
         "viewmode": "kwic",
-        "pagesize": 500,                # the number displayed concordances
+        "pagesize": 500,                # the number of displayed concordances
         "attrs": ["word"],              # a list of KWIC's positional attributes to be retrieved
         "ctxattrs": [],                 # a list of non-KWIC positional attributes to be retrieved
         "attr_vmode": "visible-kwic",
@@ -104,7 +103,7 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, shuffl
     return response_json["conc_persistence_op_id"]
 
 
-def view_concordance(session: requests.Session, op_id: str) -> dict:
+def fetch_concordances_by_id(session: requests.Session, op_id: str) -> dict:
     """
     Fetch and return the concordance view.
 
@@ -113,7 +112,7 @@ def view_concordance(session: requests.Session, op_id: str) -> dict:
         op_id (str): Concordance persistence operation ID.
 
     Returns:
-        dict: Concordance result JSON.
+        dict: Concordances in JSON.
     """
     response = session.get(f"{kontext_api_point}/view", params={
         "format": "json",
@@ -133,33 +132,3 @@ def print_json(data: dict, indent: int = 4) -> None:
         indent (int, optional): Number of spaces for indentation. Defaults to 4.
     """
     print(json.dumps(data, indent=indent, ensure_ascii=False))
-
-
-def correct_punctuation(text: str) -> str:
-    """
-    Corrects punctuation in a string. It removes any trailing whitespaces before the punctuation mark.
-    """
-    return re.sub(r"\s+([.,?!:;])", r"\1", text)
-
-
-if __name__ == "__main__":
-    corpus_name = "syn2015"
-    # query = "[word=\"yea\"]"  # OK
-    # query = "\"yea\""         # OK
-    # query = "yea"             # NOK
-    query = "[word=\"mám\"][word=\"velký\"][word=\"hlad\"]"
-    session = setup_session()
-    op_id = submit_query(session, corpus_name, query)
-    concordance = view_concordance(session, op_id)
-
-    lines = []
-    if not concordance["Lines"]:
-        print("No concordances found.")
-    else:
-        for each in concordance["Lines"]:
-            lines.append(each["Left"][0]["str"] + each["Kwic"][0]["str"] + each["Right"][0]["str"])
-        for line in lines:
-            line = correct_punctuation(line)
-            print(line)
-
-        # print_json(concordance)
