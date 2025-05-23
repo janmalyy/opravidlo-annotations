@@ -1,19 +1,30 @@
-import os
+import json
 
 from opravidlo_annotations.settings import FILES_DIR
 
-def concordances2text(filename: str, concordances: list[str], do_append: bool=True) -> None:
+
+def print_json(data: dict, indent: int = 4) -> None:
     """
-    Write concordances to a file.
+    Print JSON data with nice indentation.
+
+    Args:
+        data (dict): The JSON data to print.
+        indent (int, optional): Number of spaces for indentation. Defaults to 4.
+    """
+    print(json.dumps(data, ensure_ascii=False, indent=indent))
+
+
+def concordances2text(filename: str, concordances: list[str]) -> None:
+    """
+    Write concordances to a file. If the file does not exist, it will be created.
     Args:
         filename: filename to write to. Only the unique name, the prefix "data_zajmena" and the filename extension will be added.
         concordances: lines to be written to the file
-        do_append: whether to append to the file or write a new one (or overwrite)
-
     Returns: None
     """
     full_filename = FILES_DIR / ("data_zajmena_" + filename + ".txt")
-    if do_append and full_filename not in os.listdir(FILES_DIR):
+    do_append = True
+    if not full_filename.exists():
         do_append = False
         print(f"File {full_filename} does not exist, creating a new one.")
 
@@ -22,3 +33,41 @@ def concordances2text(filename: str, concordances: list[str], do_append: bool=Tr
             f.write(c + "\n")
 
     print(f"Succesfully wrote {len(concordances)} concordances to {full_filename}.")
+
+
+def log_the_query(filename: str, corpus_name: str, query: str, number_of_concordances: int,
+                  target: str, variants: list, is_target_valid: bool, is_from_corpus: bool) -> None:
+    """
+    Log the query into a JSON file. If the file does not exist, it will be created.
+    The queries with the same filename are appended to the same file.
+    Returns: Nothing.
+    """
+    full_filename = FILES_DIR / f"README_{filename}.json"
+
+    if not full_filename.exists():
+        starter = {"queries": []}
+        with open(full_filename, "w", encoding="utf-8") as file:
+            json.dump(starter, file, ensure_ascii=False, indent=4)
+        print(f"File {full_filename} does not exist, creating a new one.")
+
+    with open(full_filename, "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    entry = {
+        "query": query,
+        "corpus_name": corpus_name,
+        "number_of_concordances": number_of_concordances,
+        "is_from_corpus": is_from_corpus,
+    }
+
+    if is_target_valid:
+        entry["correct"] = [target]
+        entry["error"] = variants
+    else:
+        entry["correct"] = variants
+        entry["error"] = [target]
+
+    data["queries"].append(entry)
+
+    with open(full_filename, "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)

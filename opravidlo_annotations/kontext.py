@@ -41,7 +41,8 @@ def setup_session() -> requests.Session:
 
 
 
-def submit_query(session: requests.Session, corpus_name: str, query: str, shuffle: bool=True) -> str:
+def submit_query(session: requests.Session, corpus_name: str, query: str, number_of_concordances: int,
+                 shuffle: bool=True) -> str:
     """
     Submit a concordance query.
 
@@ -49,6 +50,7 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, shuffl
         session (requests.Session): Authenticated session.
         corpus_name (str): Corpus name, e.g. "syn2015".
         query (str): CQL query.
+        number_of_concordances: the number of displayed concordances
         shuffle (bool, optional): Shuffle the results. Defaults to True. It negatively affects performance.
     Returns:
         str: The concordance persistence operation ID.
@@ -65,7 +67,7 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, shuffl
         "maincorp": corpus_name,
         "usesubcorp": None,
         "viewmode": "kwic",
-        "pagesize": 500,                # the number of displayed concordances
+        "pagesize": number_of_concordances,
         "attrs": ["word"],              # a list of KWIC's positional attributes to be retrieved
         "ctxattrs": [],                 # a list of non-KWIC positional attributes to be retrieved
         "attr_vmode": "visible-kwic",
@@ -103,13 +105,14 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, shuffl
     return response_json["conc_persistence_op_id"]
 
 
-def fetch_concordances_by_id(session: requests.Session, op_id: str) -> dict:
+def fetch_concordances_by_id(session: requests.Session, op_id: str, number_of_concordances: int) -> dict:
     """
-    Fetch and return the concordance view.
+    Fetch and return the concordances in JSON format.
 
     Args:
         session (requests.Session): Authenticated session.
         op_id (str): Concordance persistence operation ID.
+        number_of_concordances (int): the number of displayed concordances
 
     Returns:
         dict: Concordances in JSON.
@@ -117,18 +120,7 @@ def fetch_concordances_by_id(session: requests.Session, op_id: str) -> dict:
     response = session.get(f"{kontext_api_point}/view", params={
         "format": "json",
         "q": f"~{op_id}",
-        "pagesize": 500,
+        "pagesize": number_of_concordances,
     })
     response.raise_for_status()
     return response.json()
-
-
-def print_json(data: dict, indent: int = 4) -> None:
-    """
-    Print JSON data with nice indentation.
-
-    Args:
-        data (dict): The JSON data to print.
-        indent (int, optional): Number of spaces for indentation. Defaults to 4.
-    """
-    print(json.dumps(data, indent=indent, ensure_ascii=False))
