@@ -5,11 +5,8 @@
 2. naklonovat k sobě tento repozitář
 3. vygenerovat si přístupové tokeny pro Kontext a Sketch Engine API a vložit je do souboru `.env` 
 4. vytvořit virtuální prostředí a nainstalovat requirements
-5. ověřit funkčnost puštením souborů `kontext.py` a `sketch_engine.py`
-6. (prohlédnout si dokumentaci ke Kontext a SketchEngine API.)
+5. vyzkoušet si s tím pracovat. Stačí měnit parametry v `main.py`, zbytek by nemělo být potřeba řešit.
 
-
-1. **Joo, ale úplně nezávisle na tomto se dá už přemýšlet nad těmi CQL dotazy k různým chybám.** Celý tady toto bude pak jen na automatizaci stažení vět z korpusu do souboru na základě toho CQL dotazu. 
 
 ### Disclaimery
 - Ultimátní rada nad zlato: Když nevím, zeptám se ChatGPT:))
