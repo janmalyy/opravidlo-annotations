@@ -10,8 +10,8 @@ def correct_punctuation(text: str) -> str:
     """
     Corrects punctuation in a string. It removes any trailing whitespaces before or after the punctuation mark.
     """
-    removed_after = re.sub(r"\s+([.,?!:;“])", r"\1", text)
-    removed_before = re.sub(r"(„)\s+", r"\1", removed_after)
+    removed_after = re.sub(r'\s+([.,?!:;“"(])', r"\1", text)
+    removed_before = re.sub(r'([„)"])\s+', r"\1", removed_after)
     return removed_before
 
 
@@ -65,16 +65,16 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     raise ValueError("Target word not found in concordance.")
 
 
-def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool, is_from_corpus:bool) -> str:
+def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool, is_from_corpora:bool) -> str:
     """
     Insert all information for the annotation into the sentence.
     If there are multiple variants of the target, one variant is chosen randomly.
     Args:
         sentence: sentence to be annotated
-        target: a word or phrase which was mainly looked up in the corpus
+        target: a word or phrase which was mainly looked up in the corpora
         target_variants: other possible words or phrases which could occur at the same place as target in the sentence
         is_target_valid: whether the target is orthographically correct or not
-        is_from_corpus: whether the sentence was extracted from the corpus as is or an error was added manually
+        is_from_corpora: whether the sentence was extracted from the corpora as is or an error was added manually
 
     Example:
         input: "Stál před jejích chalupou.", "jejích", ["jejich"], False, False
@@ -82,18 +82,18 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
 
 
     Returns: Annotated sentence. The resulting format is:
-    beginning_of_the_sentence[*error|valid|(synthetic or corpus)*]rest_of_the_sentence
+    beginning_of_the_sentence[*error|valid|(synthetic or corpora)*]rest_of_the_sentence
     """
     target_variant = rd.choice(target_variants)
 
     if is_target_valid:
-        if is_from_corpus:
-            return sentence.replace(target, f"[*{target_variant}|{target}|corpus*]")
+        if is_from_corpora:
+            return sentence.replace(target, f"[*{target_variant}|{target}|corpora*]")
         else:
             return sentence.replace(target, f"[*{target_variant}|{target}|synthetic*]")
 
     else:
-        if is_from_corpus:
-            return sentence.replace(target, f"[*{target}|{target_variant}|corpus*]")
+        if is_from_corpora:
+            return sentence.replace(target, f"[*{target}|{target_variant}|corpora*]")
         else:
             return sentence.replace(target, f"[*{target}|{target_variant}|synthetic*]")

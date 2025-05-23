@@ -35,8 +35,8 @@ def concordances2text(filename: str, concordances: list[str]) -> None:
     print(f"Succesfully wrote {len(concordances)} concordances to {full_filename}.")
 
 
-def log_the_query(filename: str, corpus_name: str, query: str, number_of_concordances: int,
-                  target: str, variants: list, is_target_valid: bool, is_from_corpus: bool) -> None:
+def log_the_query(filename: str, corpora_name: str, query: str, number_of_concordances: int,
+                  target: str, variants: list, is_target_valid: bool, is_from_corpora: bool) -> None:
     """
     Log the query into a JSON file. If the file does not exist, it will be created.
     The queries with the same filename are appended to the same file.
@@ -55,9 +55,9 @@ def log_the_query(filename: str, corpus_name: str, query: str, number_of_concord
 
     entry = {
         "query": query,
-        "corpus_name": corpus_name,
+        "corpora_name": corpora_name,
         "number_of_concordances": number_of_concordances,
-        "is_from_corpus": is_from_corpus,
+        "is_from_corpora": is_from_corpora,
     }
 
     if is_target_valid:
