@@ -8,10 +8,11 @@ if __name__ == "__main__":
     target = "jejich"
     variants = ["jejích"]
     query = f"[word=\"{target}\"]"
+    number_of_concordances = 125
 
     session = setup_session()
-    op_id = submit_query(session, corpus_name, query)
-    result = fetch_concordances_by_id(session, op_id)
+    op_id = submit_query(session, corpus_name, query, number_of_concordances)
+    result = fetch_concordances_by_id(session, op_id, number_of_concordances)
 
     if not result["Lines"]:
         raise ValueError("No concordances found.")
@@ -19,10 +20,13 @@ if __name__ == "__main__":
     concordances = [each["Left"][0]["str"] + each["Kwic"][0]["str"] + each["Right"][0]["str"]
                     for each in result["Lines"]
                    ]
-    for concordance in concordances:
+    for i in range(len(concordances)):
+        concordance = concordances[i]
         concordance = correct_punctuation(concordance)
         concordance = extract_sentence_with_target(concordance, target)
-        concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid=True, is_from_corpus=True)
+        concordance = add_annotation_to_sentence(concordance, target, variants,
+                                                 is_target_valid=True, is_from_corpus=True)
+        concordances[i] = concordance
         print(concordance)
 
     concordances2text(target, concordances, False)
