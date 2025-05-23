@@ -5,6 +5,7 @@ limits: 12 requests/second; 5000 requests/day
 
 import pickle
 import logging
+import json
 
 import requests
 
@@ -39,38 +40,50 @@ def setup_session() -> requests.Session:
     return session
 
 
-def submit_query(session: requests.Session) -> str:
+
+def submit_query(session: requests.Session, corpora_name: str, query: str, number_of_concordances: int,
+                 shuffle: bool=True) -> str:
     """
     Submit a concordance query.
 
     Args:
         session (requests.Session): Authenticated session.
-
+        corpora_name (str): corpora name, e.g. "syn2015".
+        query (str): CQL query.
+        number_of_concordances: the number of displayed concordances
+        shuffle (bool, optional): Shuffle the results. Defaults to True. It negatively affects performance.
     Returns:
         str: The concordance persistence operation ID.
     """
+    if shuffle:
+        shuffle_int = 1
+    else:
+        shuffle_int = 0
+
+    query = "[word=\".*\"]"*20+query+"[word=\".*\"]"*20     # workaround: increases the left and the right context
+
     request_body = {
         "type": "concQueryArgs",
-        "maincorp": "syn2015",
+        "maincorp": corpora_name,
         "usesubcorp": None,
         "viewmode": "kwic",
-        "pagesize": 40,
-        "attrs": ["word", "tag"],
+        "pagesize": number_of_concordances,
+        "attrs": ["word"],              # a list of KWIC's positional attributes to be retrieved
+        "ctxattrs": [],                 # a list of non-KWIC positional attributes to be retrieved
         "attr_vmode": "visible-kwic",
         "base_viewattr": "word",
-        "ctxattrs": [],
         "structs": ["text", "p", "g"],
         "refs": [],
         "fromp": 0,
-        "shuffle": 0,
+        "shuffle": shuffle_int,
         "queries": [
             {
                 "qtype": "advanced",
-                "corpname": "syn2015",
-                "query": "[word=\"celou\"] [lemma=\"pravda\"]",
+                "corpname": corpora_name,
+                "query": query,
                 "pcq_pos_neg": "pos",
                 "include_empty": False,
-                "default_attr": "word"
+                "default_attr": "word"  # a positional attribute applied for simplified CQL expressions (e.g., with default_attr="word" one can write "foo" instead of [word="foo"])
             }
         ],
         "text_types": {},
@@ -82,7 +95,7 @@ def submit_query(session: requests.Session) -> str:
             "fc_pos": [],
             "fc_pos_type": "all"
         },
-        "async": False
+        "async": True
     }
 
     response = session.post(f"{kontext_api_point}/query_submit?format=json", params={"format": "json"}, json=request_body)
@@ -92,24 +105,22 @@ def submit_query(session: requests.Session) -> str:
     return response_json["conc_persistence_op_id"]
 
 
-def view_concordance(session: requests.Session, op_id: str) -> dict:
+def fetch_concordances_by_id(session: requests.Session, op_id: str, number_of_concordances: int) -> dict:
     """
-    Fetch and return the concordance view.
+    Fetch and return the concordances in JSON format.
 
     Args:
         session (requests.Session): Authenticated session.
         op_id (str): Concordance persistence operation ID.
+        number_of_concordances (int): the number of displayed concordances
 
     Returns:
-        dict: Concordance result JSON.
+        dict: Concordances in JSON.
     """
-    response = session.get(f"{kontext_api_point}/view", params={"format": "json", "q": f"~{op_id}"})
+    response = session.get(f"{kontext_api_point}/view", params={
+        "format": "json",
+        "q": f"~{op_id}",
+        "pagesize": number_of_concordances,
+    })
     response.raise_for_status()
     return response.json()
-
-
-if __name__ == "__main__":
-    session = setup_session()
-    op_id = submit_query(session)
-    concordance = view_concordance(session, op_id)
-    print(concordance)
