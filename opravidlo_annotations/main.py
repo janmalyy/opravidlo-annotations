@@ -17,6 +17,7 @@ if __name__ == "__main__":
                           It is a list; this is an advantage if the target is correct and there are multiple equally bad other options – a randomly picked variant is then placed into the resulting annotation.
                           
     query (str): same CQL query as in the web interface. Mind that there have to be single quotes around the expression and double quotes inside to properly parse it.
+                 Note that the query is case-sensitive.
     
     number_of_concordances (int): how many concordances will be downloaded
     

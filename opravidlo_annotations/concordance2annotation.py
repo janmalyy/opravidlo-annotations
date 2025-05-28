@@ -8,11 +8,12 @@ nltk.download("punkt")
 
 def correct_punctuation(text: str) -> str:
     """
-    Corrects punctuation in a string. It removes any trailing whitespaces before or after the punctuation mark.
+    Corrects punctuation in a string. Corrects the three dots and removes any trailing whitespaces before or after the punctuation mark.
     """
-    removed_after = re.sub(r'\s+([.,?!:;“"(])', r"\1", text)
-    removed_before = re.sub(r'([„)"])\s+', r"\1", removed_after)
-    return removed_before
+    three_dots_corrected = re.sub(r'...', r'…', text)
+    removed_before = re.sub(r'\s+([.,\]?!:;“"…)¨-])', r"\1", three_dots_corrected)
+    removed_after = re.sub(r'([„\[("-])\s+', r"\1", removed_before)
+    return removed_after
 
 
 def remove_left_trailing_chars(sentence: str) -> str:
@@ -80,20 +81,20 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
         input: "Stál před jejích chalupou.", "jejích", ["jejich"], False, False
         output: Stál před [*jejích|jejich|synthetic*] chalupou.
 
-
     Returns: Annotated sentence. The resulting format is:
     beginning_of_the_sentence[*error|valid|(synthetic or corpora)*]rest_of_the_sentence
     """
     target_variant = rd.choice(target_variants)
+    pattern = rf"\b{re.escape(target)}\b"
 
     if is_target_valid:
         if is_from_corpora:
-            return sentence.replace(target, f"[*{target_variant}|{target}|corpora*]")
+            return re.sub(pattern, f"[*{target_variant}|{target}|corpora*]", sentence, flags=re.IGNORECASE)
         else:
-            return sentence.replace(target, f"[*{target_variant}|{target}|synthetic*]")
+            return re.sub(pattern, f"[*{target_variant}|{target}|synthetic*]", sentence, flags=re.IGNORECASE)
 
     else:
         if is_from_corpora:
-            return sentence.replace(target, f"[*{target}|{target_variant}|corpora*]")
+            return re.sub(pattern, f"[*{target}|{target_variant}|corpora*]", sentence, flags=re.IGNORECASE)
         else:
-            return sentence.replace(target, f"[*{target}|{target_variant}|synthetic*]")
+            return re.sub(pattern, f"[*{target}|{target_variant}|synthetic*]", sentence, flags=re.IGNORECASE)
