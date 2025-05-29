@@ -2,8 +2,9 @@ from opravidlo_annotations.settings import FILES_DIR
 from opravidlo_annotations.kontext import setup_session, fetch_concordances_by_id, submit_query
 from opravidlo_annotations.concordance2annotation import correct_punctuation, extract_sentence_with_target, \
     add_annotation_to_sentence
-from opravidlo_annotations.utils import concordances2text, log_the_query, count_correct_variants_in_json, \
-    count_correct_variants_in_txt, generate_text_readme, find_duplicates, remove_duplicates
+from opravidlo_annotations.utils import concordances2text, count_correct_variants_in_json, \
+    count_correct_variants_in_txt, remove_duplicates
+from opravidlo_annotations.query_logs import log_the_query, generate_text_readme
 
 
 def generate_and_save_query(corpus_name: str, target: str, variants: list[str], query: str,
