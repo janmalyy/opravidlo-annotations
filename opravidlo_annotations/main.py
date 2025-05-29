@@ -3,7 +3,7 @@ from opravidlo_annotations.kontext import setup_session, fetch_concordances_by_i
 from opravidlo_annotations.concordance2annotation import correct_punctuation, extract_sentence_with_target, \
     add_annotation_to_sentence
 from opravidlo_annotations.utils import concordances2text, log_the_query, count_correct_variants_in_json, \
-    count_correct_variants_in_txt, generate_text_readme
+    count_correct_variants_in_txt, generate_text_readme, find_duplicates, remove_duplicates
 
 
 def generate_and_save_query(corpus_name: str, target: str, variants: list[str], query: str,
@@ -55,9 +55,10 @@ def generate_and_save_query(corpus_name: str, target: str, variants: list[str], 
 
 def check(filename: str) -> None:
     """
-    Functions count_correct_variants_in_json and count_correct_variants_in_json serves to check the proportion of variants and
-    to check whether the queries (and especially 'number of concordances' variable) are correctly written into JSON readme.
+    Remove duplicates and then check the proportion of variants and whether the queries
+    (and especially 'number of concordances' variable) are same in the JSON readme and in the real text.
     """
+    remove_duplicates(filename)
     print("json: ", count_correct_variants_in_json(FILES_DIR / f"README_{filename}.json"))
     print("txt: ", count_correct_variants_in_txt(FILES_DIR / f"data_zajmena_{filename}.txt"))
     print()
@@ -68,17 +69,18 @@ if __name__ == "__main__":
     corpus_name = "syn2015"
     target = "sebou"
     variants = ["s sebou"]
+    # The query is case-sensitive! Remember.
     query = '[word!="s" & word!="se" & tag!="R.*"][word="sebou"]'
     number_of_concordances = 100
-    filename = "s_sebou"
+    filename = "jejich"
     is_target_valid = True
 
-    generate_and_save_query(corpus_name, target, variants, query, number_of_concordances, filename, is_target_valid)
+    # generate_and_save_query(corpus_name, target, variants, query, number_of_concordances, filename, is_target_valid)
 
     # log the query and all important variables into JSON README file
     # the 'number_of_concordances' parameter should be later adjusted manually because you don't use every concordance you downloaded
     # log_the_query(filename, corpus_name, query, number_of_concordances, target, variants, is_target_valid)
 
-    # check(filename)
+    check(filename)
 
     # generate_text_readme(FILES_DIR / f"README_{filename}.json")

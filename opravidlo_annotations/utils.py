@@ -216,8 +216,47 @@ def count_correct_variants_in_txt(filename: str) -> tuple[dict, int]:
         for line in file:
             match = re.search(r'\[\*.*?\*\]', line)
             if match:
-                key = match.group()
+                key = match.group().lower()     # unify all to lowercase
                 counter[key] = counter.get(key, 0) + 1
 
     total_number_of_records = sum(counter.values())
     return counter, total_number_of_records
+
+
+def find_duplicates(strings: list[str]) -> tuple[list[str], list[str]]:
+    """
+    Find duplicates in a list of strings. The order remains unchanged.
+    Args:
+        strings (list[str]): List of strings to check.
+
+    Returns:
+        tuple[list[str], list[str]]: List of strings without duplicates and list of duplicates
+        found in the input list; both without repetitions.
+    """
+    seen = []
+    duplicates = []
+    for string in strings:
+        if string in seen:
+            duplicates.append(string)
+        else:
+            seen.append(string)
+    return seen, duplicates
+
+
+def remove_duplicates(filename: str) -> None:
+    """
+    Returns: None; it saves the data back to the file without duplicates and prints the duplicates.
+    """
+    file_path = FILES_DIR / f"data_zajmena_{filename}.txt"
+    with open(file_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    without_duplicates, duplicates = find_duplicates(lines)
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        [f.write(line) for line in without_duplicates]
+
+    if duplicates:
+        print(f"Found {len(duplicates)} duplicates in '{filename}' file.")
+        print([duplicate for duplicate in duplicates])
+    else:
+        print("No duplicates found.")
