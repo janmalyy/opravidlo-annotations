@@ -68,7 +68,7 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     raise ValueError(f"Target word '{target}' not found in concordance: {concordance}.")
 
 
-def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool, is_from_corpus:bool) -> str:
+def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool) -> str:
     """
     Insert all information for the annotation into the sentence.
     If there are multiple variants of the target, one variant is chosen randomly.
@@ -77,26 +77,18 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
         target: a word or phrase which was mainly looked up in the corpus
         target_variants: other possible words or phrases which could occur at the same place as target in the sentence
         is_target_valid: whether the target is orthographically correct or not
-        is_from_corpus: whether the sentence was extracted from the corpus as is or an error was added manually
 
     Example:
         input: "Stál před jejích chalupou.", "jejích", ["jejich"], False, False
-        output: Stál před [*jejích|jejich|synthetic*] chalupou.
+        output: Stál před [*jejích|jejich|corpus*] chalupou.
 
     Returns: Annotated sentence. The resulting format is:
-    beginning_of_the_sentence[*error|valid|(synthetic or corpus)*]rest_of_the_sentence
+    beginning_of_the_sentence[*error|valid|corpus*]rest_of_the_sentence
     """
     target_variant = rd.choice(target_variants)
     pattern = rf"\b{re.escape(target)}\b"
 
     if is_target_valid:
-        if is_from_corpus:
-            return re.sub(pattern, f"[*{target_variant}|{target}|corpus*]", sentence, flags=re.IGNORECASE)
-        else:
-            return re.sub(pattern, f"[*{target_variant}|{target}|synthetic*]", sentence, flags=re.IGNORECASE)
-
+        return re.sub(pattern, f"[*{target_variant}|{target}|corpus*]", sentence, flags=re.IGNORECASE)
     else:
-        if is_from_corpus:
-            return re.sub(pattern, f"[*{target}|{target_variant}|corpus*]", sentence, flags=re.IGNORECASE)
-        else:
-            return re.sub(pattern, f"[*{target}|{target_variant}|synthetic*]", sentence, flags=re.IGNORECASE)
+        return re.sub(pattern, f"[*{target}|{target_variant}|corpus*]", sentence, flags=re.IGNORECASE)
