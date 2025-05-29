@@ -41,14 +41,14 @@ def setup_session() -> requests.Session:
 
 
 
-def submit_query(session: requests.Session, corpora_name: str, query: str, number_of_concordances: int,
+def submit_query(session: requests.Session, corpus_name: str, query: str, number_of_concordances: int,
                  shuffle: bool=True) -> str:
     """
     Submit a concordance query.
 
     Args:
         session (requests.Session): Authenticated session.
-        corpora_name (str): corpora name, e.g. "syn2015".
+        corpus_name (str): corpus name, e.g. "syn2015".
         query (str): CQL query.
         number_of_concordances: the number of displayed concordances
         shuffle (bool, optional): Shuffle the results. Defaults to True. It negatively affects performance.
@@ -64,7 +64,7 @@ def submit_query(session: requests.Session, corpora_name: str, query: str, numbe
 
     request_body = {
         "type": "concQueryArgs",
-        "maincorp": corpora_name,
+        "maincorp": corpus_name,
         "usesubcorp": None,
         "viewmode": "kwic",
         "pagesize": number_of_concordances,
@@ -79,7 +79,7 @@ def submit_query(session: requests.Session, corpora_name: str, query: str, numbe
         "queries": [
             {
                 "qtype": "advanced",
-                "corpname": corpora_name,
+                "corpname": corpus_name,
                 "query": query,
                 "pcq_pos_neg": "pos",
                 "include_empty": False,

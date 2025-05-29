@@ -54,47 +54,49 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     if not concordance or not target:
         raise ValueError("Empty input. Please provide valid concordance and target.")
 
-    # (?<=...) is a positive lookbehind assertion. It says: “Find a place preceded by the pattern inside the (?<=...), but don’t include it in the result.”
-    # The pattern (?<=[.!?])\s+ matches any whitespace following a sentence-ending punctuation mark but keeps the punctuation as part of the previous sentence.
     sentences = nltk.sent_tokenize(concordance)
     for sentence in sentences:
+        # the nltk sentence parser cuts out starting quotation mark, so we add it if it should be there
+        if re.search(r"“", sentence) and not re.search(r"„", sentence):
+            sentence = "„" + sentence
+
         pattern = rf"\b{re.escape(target)}\b"
         match = re.search(pattern, sentence, flags=re.IGNORECASE)
         if match:
             return remove_left_trailing_chars(sentence)
 
-    raise ValueError("Target word not found in concordance.")
+    raise ValueError(f"Target word '{target}' not found in concordance: {concordance}.")
 
 
-def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool, is_from_corpora:bool) -> str:
+def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool, is_from_corpus:bool) -> str:
     """
     Insert all information for the annotation into the sentence.
     If there are multiple variants of the target, one variant is chosen randomly.
     Args:
         sentence: sentence to be annotated
-        target: a word or phrase which was mainly looked up in the corpora
+        target: a word or phrase which was mainly looked up in the corpus
         target_variants: other possible words or phrases which could occur at the same place as target in the sentence
         is_target_valid: whether the target is orthographically correct or not
-        is_from_corpora: whether the sentence was extracted from the corpora as is or an error was added manually
+        is_from_corpus: whether the sentence was extracted from the corpus as is or an error was added manually
 
     Example:
         input: "Stál před jejích chalupou.", "jejích", ["jejich"], False, False
         output: Stál před [*jejích|jejich|synthetic*] chalupou.
 
     Returns: Annotated sentence. The resulting format is:
-    beginning_of_the_sentence[*error|valid|(synthetic or corpora)*]rest_of_the_sentence
+    beginning_of_the_sentence[*error|valid|(synthetic or corpus)*]rest_of_the_sentence
     """
     target_variant = rd.choice(target_variants)
     pattern = rf"\b{re.escape(target)}\b"
 
     if is_target_valid:
-        if is_from_corpora:
-            return re.sub(pattern, f"[*{target_variant}|{target}|corpora*]", sentence, flags=re.IGNORECASE)
+        if is_from_corpus:
+            return re.sub(pattern, f"[*{target_variant}|{target}|corpus*]", sentence, flags=re.IGNORECASE)
         else:
             return re.sub(pattern, f"[*{target_variant}|{target}|synthetic*]", sentence, flags=re.IGNORECASE)
 
     else:
-        if is_from_corpora:
-            return re.sub(pattern, f"[*{target}|{target_variant}|corpora*]", sentence, flags=re.IGNORECASE)
+        if is_from_corpus:
+            return re.sub(pattern, f"[*{target}|{target_variant}|corpus*]", sentence, flags=re.IGNORECASE)
         else:
             return re.sub(pattern, f"[*{target}|{target_variant}|synthetic*]", sentence, flags=re.IGNORECASE)

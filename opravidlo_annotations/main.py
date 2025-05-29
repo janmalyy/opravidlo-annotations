@@ -6,12 +6,14 @@ from opravidlo_annotations.utils import concordances2text, log_the_query
 
 if __name__ == "__main__":
     """
-    corpora_name (str): Currently, it works only with the Kontext API. However, not all corpora are available.
-                        It seems like it works only with small corpora. Possible OK values = syn2020, syn2015, syn2009pub, (other synYEAR options), capek_uplny, orwell, ksk-dopisy, ksp, net...
-                        Unfortunately, online2_archive, synv13 (and other versioned syn corpora) are not allowed.
+    corpus_name (str): Currently, it works only with the Kontext API. However, not all corpus are available.
+                        It seems like it works only with small corpus. Possible OK values = syn2020, syn2015, syn2009pub, (other synYEAR options), capek_uplny, orwell, ksk-dopisy, ksp, net...
+                        Unfortunately, online2_archive, synv13 (and other versioned syn corpus) are not allowed.
                         So, "net" is the only option(?) to look for natural errors, it seems.
+                        Available corpora: https://wiki.korpus.cz/doku.php/cnk:uvod
     
-    target (str): the word / word phrase that you are concerned about
+    target (str): the word / word phrase that you are concerned about.
+                  Both target and target variants should not be regular expressions because they are written as is into annotations.
     
     variants (list[str]): the second possible word / words which can occur at the same place as the target.
                           It is a list; this is an advantage if the target is correct and there are multiple equally bad other options – a randomly picked variant is then placed into the resulting annotation.
@@ -24,21 +26,22 @@ if __name__ == "__main__":
     filename (str): filename to write the annotations into. Only the unique name, the prefix "data_zajmena" and the filename extension will be added.
     
     is_target_valid (bool): set to True if it is likely that the target is the correct version in the sentence
-    is_form_corpora (bool): set to False if the error was not found in the corpora and you created it                           
+    is_from_corpus (bool): set to False if the error was not found in the corpus and you created it                           
     """
     # set up the variables
-    corpora_name = "net"
-    target = "jejich"
-    variants = ["jejích"]
-    query = f'[word="{target}"]'
-    number_of_concordances = 125
-    filename = target
+    corpus_name = "syn2015"
+    target = "sebou"
+    variants = ["s sebou"]
+    # query = f'[tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][tag!="..F.*"][word="jejích"]'
+    query = '[word!="s" & word!="se" & tag!="R.*"][word="sebou"]'
+    number_of_concordances = 100
+    filename = "s_sebou"
     is_target_valid = True
-    is_from_corpora = True
+    is_from_corpus = True
 
     # run
     session = setup_session()
-    op_id = submit_query(session, corpora_name, query, number_of_concordances)
+    op_id = submit_query(session, corpus_name, query, number_of_concordances)
     result = fetch_concordances_by_id(session, op_id, number_of_concordances)
 
     if not result["Lines"]:
@@ -52,13 +55,15 @@ if __name__ == "__main__":
         concordance = correct_punctuation(concordance)
         concordance = extract_sentence_with_target(concordance, target)
         concordance = add_annotation_to_sentence(concordance, target, variants,
-                                                 is_target_valid, is_from_corpora)
+                                                 is_target_valid, is_from_corpus)
         concordances[i] = concordance
         print(concordance)
+    print()
+    print()
 
-    # store the concordances into the file
+    # save the concordances into the file
     concordances2text(filename, concordances)
 
-    # Logs the query and all important variables into JSON README file. Doesn't work fully yet. It is better to not use now.
-    # log_the_query(filename, corpora_name, query, number_of_concordances, target, variants, is_target_valid, is_from_corpora)
+    # logs the query and all important variables into JSON README file. Doesn't work fully yet. It is better to not use now.
+    # log_the_query(filename, corpus_name, query, number_of_concordances, target, variants, is_target_valid, is_from_corpus)
 
