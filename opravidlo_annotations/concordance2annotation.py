@@ -26,7 +26,8 @@ def remove_left_trailing_chars(sentence: str) -> str:
 
     Returns: Sentence without left trailing characters.
     """
-    pattern = r'^.{0,10}?([A-ZŠČŘŽŠĎŤŇ])'
+    # beginning of the sentence, then 0-10 times any other character than „ and then a big letter
+    pattern = r'^[^„]{0,10}?([A-ZŠČŘŽŠĎŤŇ])'
     match = re.search(pattern, sentence)
     if match:
         start_index = match.start(1)
@@ -55,15 +56,13 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
         raise ValueError("Empty input. Please provide valid concordance and target.")
 
     sentences = nltk.sent_tokenize(concordance)
-    for sentence in sentences:
-        # the nltk sentence parser cuts out starting quotation mark, so we add it if it should be there
-        if re.search(r"“", sentence) and not re.search(r"„", sentence):
-            sentence = "„" + sentence
-
+    for i in range(len(sentences)):
+        if re.search(r"[”“]", sentences[i]) and not re.search(r"„", sentences[i]):
+            sentences[i] = "„" + sentences[i]
         pattern = rf"\b{re.escape(target)}\b"
-        match = re.search(pattern, sentence, flags=re.IGNORECASE)
+        match = re.search(pattern, sentences[i], flags=re.IGNORECASE)
         if match:
-            return remove_left_trailing_chars(sentence)
+            return remove_left_trailing_chars(sentences[i])
 
     raise ValueError(f"Target word '{target}' not found in concordance: {concordance}.")
 
