@@ -8,11 +8,12 @@ nltk.download("punkt")
 
 def correct_punctuation(text: str) -> str:
     """
-    Corrects punctuation in a string. Corrects the three dots and removes any trailing whitespaces before or after the punctuation mark.
+    Corrects punctuation in a string. Corrects the three dots, hyphen to dash and removes any trailing whitespaces before or after the punctuation mark.
     """
     three_dots_corrected = re.sub(r'\.\.\.', r'…', text)
-    removed_before = re.sub(r'\s+([.,\]?!:;“"…)¨-])', r"\1", three_dots_corrected)
-    removed_after = re.sub(r'([„\[("-])\s+', r"\1", removed_before)
+    dash_corrected = re.sub(r' - ', r' – ', three_dots_corrected)
+    removed_before = re.sub(r'\s+([.,\]?!:;“"…)¨«])', r"\1", dash_corrected)
+    removed_after = re.sub(r'([„\[("»])\s+', r"\1", removed_before)
     return removed_after
 
 
@@ -26,7 +27,8 @@ def remove_left_trailing_chars(sentence: str) -> str:
 
     Returns: Sentence without left trailing characters.
     """
-    pattern = r'^.{0,10}?([A-ZŠČŘŽŠĎŤŇ])'
+    # beginning of the sentence, then 0-10 times any other character than „ or ( and then a big letter
+    pattern = r'^[^\(„]{0,10}?([A-ZŠČŘŽŠĎŤŇ])'
     match = re.search(pattern, sentence)
     if match:
         start_index = match.start(1)
@@ -54,47 +56,39 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     if not concordance or not target:
         raise ValueError("Empty input. Please provide valid concordance and target.")
 
-    # (?<=...) is a positive lookbehind assertion. It says: “Find a place preceded by the pattern inside the (?<=...), but don’t include it in the result.”
-    # The pattern (?<=[.!?])\s+ matches any whitespace following a sentence-ending punctuation mark but keeps the punctuation as part of the previous sentence.
     sentences = nltk.sent_tokenize(concordance)
-    for sentence in sentences:
+    for i in range(len(sentences)):
+        if re.search(r"[”“]", sentences[i]) and not re.search(r"„", sentences[i]):
+            sentences[i] = "„" + sentences[i]
         pattern = rf"\b{re.escape(target)}\b"
-        match = re.search(pattern, sentence, flags=re.IGNORECASE)
+        match = re.search(pattern, sentences[i], flags=re.IGNORECASE)
         if match:
-            return remove_left_trailing_chars(sentence)
+            return remove_left_trailing_chars(sentences[i])
 
-    raise ValueError("Target word not found in concordance.")
+    raise ValueError(f"Target word '{target}' not found in concordance: '{concordance}'.")
 
 
-def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool, is_from_corpora:bool) -> str:
+def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool) -> str:
     """
     Insert all information for the annotation into the sentence.
     If there are multiple variants of the target, one variant is chosen randomly.
     Args:
         sentence: sentence to be annotated
-        target: a word or phrase which was mainly looked up in the corpora
+        target: a word or phrase which was mainly looked up in the corpus
         target_variants: other possible words or phrases which could occur at the same place as target in the sentence
         is_target_valid: whether the target is orthographically correct or not
-        is_from_corpora: whether the sentence was extracted from the corpora as is or an error was added manually
 
     Example:
         input: "Stál před jejích chalupou.", "jejích", ["jejich"], False, False
-        output: Stál před [*jejích|jejich|synthetic*] chalupou.
+        output: Stál před [*jejích|jejich|corpus*] chalupou.
 
     Returns: Annotated sentence. The resulting format is:
-    beginning_of_the_sentence[*error|valid|(synthetic or corpora)*]rest_of_the_sentence
+    beginning_of_the_sentence[*error|valid|corpus*]rest_of_the_sentence
     """
     target_variant = rd.choice(target_variants)
     pattern = rf"\b{re.escape(target)}\b"
 
     if is_target_valid:
-        if is_from_corpora:
-            return re.sub(pattern, f"[*{target_variant}|{target}|corpora*]", sentence, flags=re.IGNORECASE)
-        else:
-            return re.sub(pattern, f"[*{target_variant}|{target}|synthetic*]", sentence, flags=re.IGNORECASE)
-
+        return re.sub(pattern, f"[*{target_variant}|{target}|corpus*]", sentence, flags=re.IGNORECASE)
     else:
-        if is_from_corpora:
-            return re.sub(pattern, f"[*{target}|{target_variant}|corpora*]", sentence, flags=re.IGNORECASE)
-        else:
-            return re.sub(pattern, f"[*{target}|{target_variant}|synthetic*]", sentence, flags=re.IGNORECASE)
+        return re.sub(pattern, f"[*{target}|{target_variant}|corpus*]", sentence, flags=re.IGNORECASE)
