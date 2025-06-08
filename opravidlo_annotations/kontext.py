@@ -100,9 +100,9 @@ def submit_query(session: requests.Session, corpus_name: str, query: str, number
 
     response = session.post(f"{kontext_api_point}/query_submit?format=json", params={"format": "json"}, json=request_body)
     response.raise_for_status()
-    response_json = response.json()
+    data = response.json()
 
-    return response_json["conc_persistence_op_id"]
+    return data["conc_persistence_op_id"]
 
 
 def fetch_concordances_by_id(session: requests.Session, op_id: str, number_of_concordances: int) -> dict:
