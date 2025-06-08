@@ -32,7 +32,7 @@ def generate_and_save_query(corpus_name: str, target: str, variants: list[str], 
     is_target_valid (bool): set to True if it is likely that the target is the correct version in the sentence
     """
     session = setup_session()
-    op_id = submit_query(session, corpus_name, query, number_of_concordances)
+    op_id = submit_query(session, corpus_name, query, number_of_concordances, shuffle=True)
     result = fetch_concordances_by_id(session, op_id, number_of_concordances)
 
     if not result["Lines"]:
@@ -67,12 +67,12 @@ def check(filename: str) -> None:
 
 if __name__ == "__main__":
     # set up the variables
-    corpus_name = "syn2015"
-    target = "sebou"
-    variants = ["s sebou"]
+    corpus_name = "syn2020"
+    target = "jejich"
+    variants = ["jejích"]
     # The query is case-sensitive! Remember.
-    query = '[word!="s" & word!="se" & tag!="R.*"][word="sebou"]'
-    number_of_concordances = 100
+    query = '[word="[jJ]ejich"]'
+    number_of_concordances = 300
     filename = "jejich"
     is_target_valid = True
 
@@ -82,6 +82,6 @@ if __name__ == "__main__":
     # the 'number_of_concordances' parameter should be later adjusted manually because you don't use every concordance you downloaded
     # log_the_query(filename, corpus_name, query, number_of_concordances, target, variants, is_target_valid)
 
-    check(filename)
+    # check(filename)
 
     # generate_text_readme(FILES_DIR / f"README_{filename}.json")
