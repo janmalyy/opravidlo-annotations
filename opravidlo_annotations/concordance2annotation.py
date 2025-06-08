@@ -65,7 +65,7 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
         if match:
             return remove_left_trailing_chars(sentences[i])
 
-    raise ValueError(f"Target word '{target}' not found in concordance: {concordance}.")
+    raise ValueError(f"Target word '{target}' not found in concordance: '{concordance}'.")
 
 
 def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool) -> str:
