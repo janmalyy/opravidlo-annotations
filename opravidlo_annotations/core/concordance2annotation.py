@@ -11,9 +11,10 @@ def correct_punctuation(text: str) -> str:
     Corrects punctuation in a string. Corrects the three dots, hyphen to dash and removes any trailing whitespaces before or after the punctuation mark.
     """
     three_dots_corrected = re.sub(r'\.\.\.', r'…', text)
-    dash_corrected = re.sub(r' - ', r' – ', three_dots_corrected)
+    two_spaces_corrected = re.sub(r'  ', r' ', three_dots_corrected)
+    dash_corrected = re.sub(r' - ', r' – ', two_spaces_corrected)
     removed_before = re.sub(r'\s+([.,\]?!:;“"…)¨«])', r"\1", dash_corrected)
-    removed_after = re.sub(r'([„\[("»])\s+', r"\1", removed_before)
+    removed_after = re.sub(r'([„\[("»°])\s+', r"\1", removed_before)
     return removed_after
 
 

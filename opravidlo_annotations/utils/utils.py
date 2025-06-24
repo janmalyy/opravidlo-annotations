@@ -15,7 +15,7 @@ def print_json(data: dict, indent: int = 4) -> None:
     print(json.dumps(data, ensure_ascii=False, indent=indent))
 
 
-def concordances2text(filename: str, concordances: list[str]) -> None:
+def save_concordances_to_file(filename: str, concordances: list[str]) -> None:
     """
     Write concordances to a file. If the file does not exist, it will be created.
     Args:
@@ -32,6 +32,7 @@ def concordances2text(filename: str, concordances: list[str]) -> None:
     with open(full_filename, "a" if do_append else "w", encoding="utf-8") as f:
         for c in concordances:
             f.write(c + "\n")
+        f.write("\n\n")
 
     print(f"Succesfully wrote {len(concordances)} concordances to {full_filename}.")
 
@@ -110,7 +111,7 @@ def find_duplicates(strings: list[str]) -> tuple[list[str], list[str]]:
     seen = []
     duplicates = []
     for string in strings:
-        if string in seen:
+        if string != "\n" and string in seen:   # we don't want to remove blank lines
             duplicates.append(string)
         else:
             seen.append(string)
@@ -134,3 +135,14 @@ def remove_duplicates(filename: str) -> None:
         print([duplicate for duplicate in duplicates])
     else:
         print("No duplicates found.")
+
+
+def check(filename: str) -> None:
+    """
+    Remove duplicates and then check the proportion of variants and whether the queries
+    (and especially 'number of concordances' variable) are same in the JSON readme and in the real text.
+    """
+    remove_duplicates(filename)
+    print("json: ", count_correct_variants_in_json(FILES_DIR / f"README_{filename}.json"))
+    print("txt: ", count_correct_variants_in_txt(FILES_DIR / f"data_zajmena_{filename}.txt"))
+    print()

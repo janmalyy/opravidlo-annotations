@@ -1,6 +1,6 @@
 # custom gitignore
 opravidlo_annotations/files/*
-opravidlo_annotations/cookies.pickle
+opravidlo_annotations/api/cookies.pickle
 
 # --------------------------------------------------------------------
 .idea

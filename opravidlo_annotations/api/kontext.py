@@ -5,14 +5,14 @@ limits: 12 requests/second; 5000 requests/day
 
 import pickle
 import logging
-import json
 
 import requests
 
 from opravidlo_annotations import settings
+from opravidlo_annotations.settings import OPRAVIDLO_DIR
 
 logging.basicConfig(level=logging.INFO)
-cookies_file = "cookies.pickle"
+cookies_file_path = OPRAVIDLO_DIR / "opravidlo_annotations" / "api" / "cookies.pickle"
 kontext_api_point = "https://korpus.cz/kontext-api/v0.17/"
 
 
@@ -25,20 +25,20 @@ def setup_session() -> requests.Session:
     """
     session = requests.Session()
     try:
-        with open(cookies_file, "rb") as f:
+        with open(cookies_file_path, "rb") as f:
             session.cookies.update(pickle.load(f))
     except FileNotFoundError:
-        logging.info(f"No existing cookies found at '{cookies_file}, logging in with access token.")
+        logging.info(f"No existing cookies found at '{cookies_file_path}, logging in with access token.")
+        logging.info("And creating new cookies file.")
 
     response = session.post("https://korpus.cz/login", data={"personal_access_token": settings.KONTEXT_TOKEN})
     if response.status_code != 200:
-        raise RuntimeError("Login failed or token is invalid")
+        raise RuntimeError("Login failed or token is invalid.")
 
-    with open(cookies_file, "wb") as f:
+    with open(cookies_file_path, "wb") as f:
         pickle.dump(session.cookies, f)
 
     return session
-
 
 
 def submit_query(session: requests.Session, corpus_name: str, query: str, number_of_concordances: int,
