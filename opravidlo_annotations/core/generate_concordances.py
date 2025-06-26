@@ -4,9 +4,11 @@ from collections.abc import Callable
 import requests
 
 from opravidlo_annotations.core.concordance2annotation import correct_punctuation, extract_sentence_with_target, \
-    add_annotation_to_sentence
+    add_annotation_to_sentence, construct_target_from_code
 from opravidlo_annotations.api.kontext import setup_session, submit_query, fetch_concordances_by_id
 from opravidlo_annotations.api.sketch_engine import get_concordances_from_sketch
+
+
 
 
 def _extract_kontext_text(line: dict) -> str:
@@ -156,22 +158,31 @@ def _fetch_combo_concordances(query: str, number_of_concordances_to_fetch: int) 
     return concordances
 
 
-def _process_and_annotate_concordances(concordances: list[str], target: str, variants: list[str],
-                                      is_target_valid: bool, construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
+def _process_and_annotate_concordances(concordances: list[str], to_be_target: str, variants: list[str], is_target_valid: bool,
+                                       is_target_regexp:bool, construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
     processed_concordances = []
     for concordance in concordances:
+        if is_target_regexp:
+            target = construct_target_from_code(to_be_target, concordance)
+            if target is None:
+                continue
+        else:
+            target = to_be_target
+
         concordance = correct_punctuation(concordance)
         concordance = extract_sentence_with_target(concordance, target)
-        concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid, construct_target_variant)
+        concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid,
+                                                 construct_target_variant)
         processed_concordances.append(concordance)
         print(concordance)
+
     print()
     return processed_concordances
 
 
 def generate_concordances(corpus_manager: str, corpus_name: str, target: str, variants: list[str], query: str,
                           number_of_concordances_to_fetch: int, is_target_valid: bool,
-                          construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
+                          is_target_regexp: bool, construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
     """
     Generate concordances from a corpus and annotate them.
 
@@ -202,6 +213,8 @@ def generate_concordances(corpus_manager: str, corpus_name: str, target: str, va
 
         is_target_valid (bool): set to True if it is likely that the target is the correct version in the sentence
 
+        is_target_regexp (bool): True means we don't look for a concrete word/phrase but for a regexp pattern
+
         construct_target_variant: function which - if is passed - is applied to target_variant and changes it
 
     Returns:
@@ -218,4 +231,4 @@ def generate_concordances(corpus_manager: str, corpus_name: str, target: str, va
     else:
         raise ValueError(f"Unknown corpus manager: {corpus_manager}. Choose either 'sketch', 'kontext', or 'combo'.")
 
-    return _process_and_annotate_concordances(concordances, target, variants, is_target_valid, construct_target_variant)
+    return _process_and_annotate_concordances(concordances, target, variants, is_target_valid, is_target_regexp, construct_target_variant)

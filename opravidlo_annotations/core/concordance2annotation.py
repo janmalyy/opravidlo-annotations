@@ -1,4 +1,5 @@
 import re
+import logging
 import random as rd
 from collections.abc import Callable
 
@@ -6,6 +7,7 @@ import nltk
 
 nltk.download("punkt")
 
+logging.basicConfig(level=logging.INFO)
 
 def correct_punctuation(text: str) -> str:
     """
@@ -62,7 +64,7 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     for i in range(len(sentences)):
         if re.search(r"[”“]", sentences[i]) and not re.search(r"„", sentences[i]):
             sentences[i] = "„" + sentences[i]
-        pattern = rf"\b{re.escape(target)}\b"
+        pattern = rf"{re.escape(target)}"
         match = re.search(pattern, sentences[i], flags=re.IGNORECASE)
         if match:
             return remove_left_trailing_chars(sentences[i])
@@ -89,7 +91,7 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
     beginning_of_the_sentence[*error|valid|corpus*]rest_of_the_sentence
     """
     target_variant = rd.choice(target_variants)
-    target_ready_to_regexp = rf"\b{re.escape(target)}\b"
+    target_ready_to_regexp = rf"{re.escape(target)}"
 
     if construct_target_variant:
         target_variant = construct_target_variant(target, target_variant)
@@ -103,3 +105,43 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
             return re.sub(target_ready_to_regexp, f"[*{target_variant}|{target}|corpus*]", sentence, flags=re.IGNORECASE)
         else:
             return re.sub(target_ready_to_regexp, f"[*{target}|{target_variant}|corpus*]", sentence, flags=re.IGNORECASE)
+
+
+def construct_target_from_code(target_code: str, concordance: str) -> str | None:
+    """
+    Given target_code, create regexp and find the real target in concordance.
+
+    Examples:
+         target_code = "mi-mi", concordance = "S tvými kamarádkami nechci mít nic společného." -> "tvými kamarádkami"
+
+    Returns: Ready to be used target.
+
+    """
+    parts = target_code.split("-")
+    pattern = "".join(rf"\w+{part} " for part in parts).strip()  # this has to be changed sometimes
+    match = re.search(pattern, concordance)
+    if match:
+        return match.group()
+    else:
+        logging.info(f"Concordance: '{concordance}' does not contain a target: '{target_code}'.")
+        return None
+
+
+def construct_target_variant_from_code(target: str, target_variant_code:str) -> str:
+    """
+    Replace the last character of each word in target with a corresponding character in the target_variant.
+
+    Examples:
+         target = "těmi dlouhými rukami", target_variant_code = "a-a-a" -> "těma dlouhýma rukama"
+
+    Returns:
+        Ready to be used target variant.
+    """
+    parts = target.strip().split(" ")
+    target_variant_code_parts = target_variant_code.split("-")
+    modified_parts = []
+    for i in range(len(parts)):
+        part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
+        modified_parts.append(part)
+
+    return " ".join(modified_parts)
