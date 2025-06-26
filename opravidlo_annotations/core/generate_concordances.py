@@ -1,4 +1,5 @@
 import random as rd
+from collections.abc import Callable
 
 import requests
 
@@ -52,7 +53,7 @@ def _check_result_has_lines(result: dict, corpus_manager: str, corpus_name: str)
     Raises:
         ValueError: If the result has no lines
     """
-    if not result["Lines"]:
+    if not result.get("Lines"):
         raise ValueError(f"No concordances found in: manager: '{corpus_manager}', corpus: '{corpus_name}'."
                          f"(Are you sure that you used correct tagging system?)")
 
@@ -156,12 +157,12 @@ def _fetch_combo_concordances(query: str, number_of_concordances_to_fetch: int) 
 
 
 def _process_and_annotate_concordances(concordances: list[str], target: str, variants: list[str],
-                                      is_target_valid: bool) -> list[str]:
+                                      is_target_valid: bool, construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
     processed_concordances = []
     for concordance in concordances:
         concordance = correct_punctuation(concordance)
         concordance = extract_sentence_with_target(concordance, target)
-        concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid)
+        concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid, construct_target_variant)
         processed_concordances.append(concordance)
         print(concordance)
     print()
@@ -169,7 +170,8 @@ def _process_and_annotate_concordances(concordances: list[str], target: str, var
 
 
 def generate_concordances(corpus_manager: str, corpus_name: str, target: str, variants: list[str], query: str,
-                          number_of_concordances_to_fetch: int, is_target_valid: bool) -> list[str]:
+                          number_of_concordances_to_fetch: int, is_target_valid: bool,
+                          construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
     """
     Generate concordances from a corpus and annotate them.
 
@@ -200,6 +202,8 @@ def generate_concordances(corpus_manager: str, corpus_name: str, target: str, va
 
         is_target_valid (bool): set to True if it is likely that the target is the correct version in the sentence
 
+        construct_target_variant: function which - if is passed - is applied to target_variant and changes it
+
     Returns:
         list[str]: List of processed and annotated concordances
     """
@@ -214,4 +218,4 @@ def generate_concordances(corpus_manager: str, corpus_name: str, target: str, va
     else:
         raise ValueError(f"Unknown corpus manager: {corpus_manager}. Choose either 'sketch', 'kontext', or 'combo'.")
 
-    return _process_and_annotate_concordances(concordances, target, variants, is_target_valid)
+    return _process_and_annotate_concordances(concordances, target, variants, is_target_valid, construct_target_variant)

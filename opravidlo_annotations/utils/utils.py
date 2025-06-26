@@ -32,7 +32,7 @@ def save_concordances_to_file(filename: str, concordances: list[str]) -> None:
     with open(full_filename, "a" if do_append else "w", encoding="utf-8") as f:
         for c in concordances:
             f.write(c + "\n")
-        f.write("\n\n")
+        # f.write("\n\n")
 
     print(f"Succesfully wrote {len(concordances)} concordances to {full_filename}.")
 
