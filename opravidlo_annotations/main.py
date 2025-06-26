@@ -9,8 +9,9 @@ if __name__ == "__main__":
 
     corpus_manager = "kontext"
     corpus_name = "syn2020"     # cstenten_all_mj2, cstenten23_mj2
-    target = "ma-ma"
-    variants = ["i-i"]
+    target = "mi-mi"
+    variants = ["a-a", "a-i", "i-a"]
+    variant_weights = [0.5, 0.25, 0.25]
     is_target_code = True
 
     # The query is case-sensitive! Remember.
@@ -29,7 +30,7 @@ if __name__ == "__main__":
 
     concordances = generate_concordances(corpus_manager, corpus_name, target, variants,
                                          query, number_of_concordances_to_fetch, is_target_valid,
-                                         is_target_code, construct_target_variant_from_code)
+                                         is_target_code, variant_weights, construct_target_variant_from_code)
 
     # save_concordances_to_file(filename, concordances)
 

@@ -72,7 +72,8 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     raise ValueError(f"Target word '{target}' not found in concordance: '{concordance}'.")
 
 
-def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool, construct_target_variant: Callable[[str, str], str]=None) -> str:
+def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool,
+                               variants_weights: list[float]= None, construct_target_variant: Callable[[str, str], str]=None) -> str:
     """
     Insert all information for the annotation into the sentence.
     If there are multiple variants of the target, one variant is chosen randomly.
@@ -81,6 +82,7 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
         target: a word or phrase which was mainly looked up in the corpus
         target_variants: other possible words or phrases which could occur at the same place as target in the sentence
         is_target_valid: whether the target is orthographically correct or not
+        variants_weights: list of weights to change the distribution of variants
         construct_target_variant: function which - if is passed - is applied to target_variant and changes it
 
     Example:
@@ -90,7 +92,13 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
     Returns: Annotated sentence. The resulting format is:
     beginning_of_the_sentence[*error|valid|corpus*]rest_of_the_sentence
     """
-    target_variant = rd.choice(target_variants)
+    if variants_weights is None:
+        target_variant = rd.choice(target_variants)
+    else:
+        if len(target_variants) != len(variants_weights):
+            raise ValueError(f"Target variants and weights do not match, they have different length."
+                             f"Variants: {len(target_variants)}, Weights: {len(variants_weights)}")
+        target_variant = rd.choices(target_variants, variants_weights, k=1)
     target_ready_to_regexp = rf"{re.escape(target)}"
 
     if construct_target_variant:
