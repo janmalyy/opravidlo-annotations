@@ -16,8 +16,8 @@ def correct_punctuation(text: str) -> str:
     three_dots_corrected = re.sub(r'\.\.\.', r'…', text)
     two_spaces_corrected = re.sub(r'  ', r' ', three_dots_corrected)
     dash_corrected = re.sub(r' - ', r' – ', two_spaces_corrected)
-    removed_before = re.sub(r'\s+([.,\]?!:;“"…)¨«])', r"\1", dash_corrected)
-    removed_after = re.sub(r'([„\[("»°])\s+', r"\1", removed_before)
+    removed_before = re.sub(r'\s+([.,\]}?!:;“"…)¨«])', r"\1", dash_corrected)
+    removed_after = re.sub(r'([„\[{("»°])\s+', r"\1", removed_before)
     return removed_after
 
 
@@ -98,7 +98,7 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
         if len(target_variants) != len(variants_weights):
             raise ValueError(f"Target variants and weights do not match, they have different length."
                              f"Variants: {len(target_variants)}, Weights: {len(variants_weights)}")
-        target_variant = rd.choices(target_variants, variants_weights, k=1)
+        target_variant = rd.choices(target_variants, variants_weights, k=1)[0]  # [0] is here because choices returns a list, and we want only the string
     target_ready_to_regexp = rf"{re.escape(target)}"
 
     if construct_target_variant:
@@ -126,7 +126,8 @@ def construct_target_from_code(target_code: str, concordance: str) -> str | None
 
     """
     parts = target_code.split("-")
-    pattern = "".join(rf"\w+{part} " for part in parts).strip()  # this has to be changed sometimes
+    # pattern = "".join(rf"\w+{part} " for part in parts).strip()  # this has to be changed sometimes
+    pattern = rf"\w+{parts[0]} " + rf"(\w+|,|„) " + rf"\w+{parts[1]} "  + rf"\w+{parts[2]} " + rf"\w+{parts[3]} " + rf"\w+{parts[4]}"
     match = re.search(pattern, concordance)
     if match:
         return match.group()
@@ -149,7 +150,12 @@ def construct_target_variant_from_code(target: str, target_variant_code:str) -> 
     target_variant_code_parts = target_variant_code.split("-")
     modified_parts = []
     for i in range(len(parts)):
-        part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
+        if i == 0:
+            part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])  # this has to be changed sometimes
+        elif i == 1:
+            part = parts[i]
+        elif i==2 or i== 3 or i == 4 or i == 5:
+            part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i-1]}", parts[i])
         modified_parts.append(part)
 
     return " ".join(modified_parts)
