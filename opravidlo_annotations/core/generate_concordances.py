@@ -170,7 +170,6 @@ def _process_and_annotate_concordances(concordances: list[str], to_be_target: st
         else:
             target = to_be_target
 
-        concordance = correct_punctuation(concordance)
         concordance = extract_sentence_with_target(concordance, target)
         concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid,
                                                  variants_weights, construct_target_variant)

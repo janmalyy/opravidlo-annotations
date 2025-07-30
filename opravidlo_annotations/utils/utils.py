@@ -122,7 +122,7 @@ def remove_duplicates(filename: str) -> None:
     """
     Returns: None; it saves the data back to the file without duplicates and prints the duplicates.
     """
-    file_path = FILES_DIR / f"data_zajmena_{filename}.txt"
+    file_path = FILES_DIR / f"data_shoda_{filename}.txt"
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
     without_duplicates, duplicates = find_duplicates(lines)
@@ -144,5 +144,5 @@ def check(filename: str) -> None:
     """
     remove_duplicates(filename)
     print("json: ", count_correct_variants_in_json(FILES_DIR / f"README_{filename}.json"))
-    print("txt: ", count_correct_variants_in_txt(FILES_DIR / f"data_zajmena_{filename}.txt"))
+    print("txt: ", count_correct_variants_in_txt(FILES_DIR / f"data_shoda_{filename}.txt"))
     print()

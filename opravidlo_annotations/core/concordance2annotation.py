@@ -16,8 +16,8 @@ def correct_punctuation(text: str) -> str:
     three_dots_corrected = re.sub(r'\.\.\.', r'…', text)
     two_spaces_corrected = re.sub(r'  ', r' ', three_dots_corrected)
     dash_corrected = re.sub(r' - ', r' – ', two_spaces_corrected)
-    removed_before = re.sub(r'\s+([.,\]?!:;“"…)¨«])', r"\1", dash_corrected)
-    removed_after = re.sub(r'([„\[("»°])\s+', r"\1", removed_before)
+    removed_before = re.sub(r'\s+([.,\]}?!:;“"…)¨«])', r"\1", dash_corrected)
+    removed_after = re.sub(r'([„\[{("»°])\s+', r"\1", removed_before)
     return removed_after
 
 
@@ -98,7 +98,7 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
         if len(target_variants) != len(variants_weights):
             raise ValueError(f"Target variants and weights do not match, they have different length."
                              f"Variants: {len(target_variants)}, Weights: {len(variants_weights)}")
-        target_variant = rd.choices(target_variants, variants_weights, k=1)
+        target_variant = rd.choices(target_variants, variants_weights, k=1)[0]  # [0] is here because choices returns a list, and we want only the string
     target_ready_to_regexp = rf"{re.escape(target)}"
 
     if construct_target_variant:
