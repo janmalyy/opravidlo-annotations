@@ -159,7 +159,7 @@ def _fetch_combo_concordances(query: str, number_of_concordances_to_fetch: int) 
 
 
 def _process_and_annotate_concordances(concordances: list[str], to_be_target: str, variants: list[str], is_target_valid: bool,
-                                       is_target_regexp:bool, variants_weights: list[int] = None,
+                                       is_target_regexp:bool, variants_weights: list[float] = None,
                                        construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
     processed_concordances = []
     for concordance in concordances:

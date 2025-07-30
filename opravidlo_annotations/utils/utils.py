@@ -23,7 +23,7 @@ def save_concordances_to_file(filename: str, concordances: list[str]) -> None:
         concordances: lines to be written to the file
     Returns: None
     """
-    full_filename = FILES_DIR / ("data_zajmena_" + filename + ".txt")
+    full_filename = FILES_DIR / ("data_shoda_" + filename + ".txt")
     do_append = True
     if not full_filename.exists():
         do_append = False
