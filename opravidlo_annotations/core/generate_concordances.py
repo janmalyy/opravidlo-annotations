@@ -174,6 +174,7 @@ def _process_and_annotate_concordances(concordances: list[str], to_be_target: st
         concordance = extract_sentence_with_target(concordance, target)
         concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid,
                                                  variants_weights, construct_target_variant)
+        concordance = correct_punctuation(concordance)
         processed_concordances.append(concordance)
         print(concordance)
 
