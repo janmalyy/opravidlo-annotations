@@ -1,5 +1,8 @@
+import os
 import json
 import re
+
+import docx
 
 from opravidlo_annotations.settings import FILES_DIR
 
@@ -32,9 +35,35 @@ def save_concordances_to_file(filename: str, concordances: list[str]) -> None:
     with open(full_filename, "a" if do_append else "w", encoding="utf-8") as f:
         for c in concordances:
             f.write(c + "\n")
-        # f.write("\n\n")
 
     print(f"Succesfully wrote {len(concordances)} concordances to {full_filename}.")
+
+
+def save_concordances_to_word(concordances: list[str]) -> None:
+    """
+    Write concordances to the helper docx file.
+
+    Args:
+        concordances: lines to be written to the file
+
+    Returns:
+        None
+    """
+    doc = docx.Document()
+    # Set global style (Normal) to Arial
+    style = doc.styles["Normal"]
+    font = style.font
+    font.name = "Aptos"
+    font.size = docx.shared.Pt(11)
+
+    for c in concordances:
+        doc.add_paragraph(c)
+
+    output_path = FILES_DIR / "word.docx"
+    doc.save(output_path)
+    os.startfile(output_path)
+
+    print(f"Successfully wrote {len(concordances)} concordances to {output_path.name}.")
 
 
 def count_correct_variants_in_json(filename: str) -> tuple[dict, int]:

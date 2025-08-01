@@ -1,7 +1,7 @@
 from opravidlo_annotations.core.concordance2annotation import construct_target_variant_from_code
 from opravidlo_annotations.core.generate_concordances import generate_concordances
 from opravidlo_annotations.settings import FILES_DIR
-from opravidlo_annotations.utils.utils import save_concordances_to_file, check
+from opravidlo_annotations.utils.utils import save_concordances_to_file, check, save_concordances_to_word
 from opravidlo_annotations.utils.query_logs import log_the_query, generate_text_readme
 
 
@@ -9,26 +9,36 @@ if __name__ == "__main__":
 
     corpus_manager = "kontext"
     corpus_name = "syn2020"     # cstenten_all_mj2, cstenten23_mj2
-    target = "mi-mi-mi-mi-mi"
-    variants = ["a-a-a-a-a", "i-a-a-a-a", "i-i-a-a-a", "i-i-i-a-a", "a-i-i-i-i", "a-a-i-i-i", "a-a-a-i-i"]
-    variants_weights = [0.5, 1 / 12, 1 / 12, 1 / 12, 1 / 12, 1 / 12, 1 / 12]
+    koncovka = "i"
+    target = f"l{koncovka}"
+    if koncovka == "i":
+        variants = ["y", "a"]
+    elif koncovka == "a":
+        variants = ["y", "i"]
+    elif koncovka == "y":
+        variants = ["i", "a"]
+    variants_weights = [2/3, 1/3]
     is_target_code = True
 
     # The query is case-sensitive! Remember.
     # Kontext canonical order: 1. slovní druh - 2. určení druhu - 3. rod - 4. číslo - 5. pád - 6. přivl. rod - 7. přivl. číslo - 8. osoba - 9. čas (https://wiki.korpus.cz/doku.php/seznamy:tagy#popis_jednotlivych_pozic_znacky)
     # Sketch engine canonical order: kegncpamdxytzw~ (https://www.sketchengine.eu/tagset-reference-for-czech/)
-    not_mi_word = '[word!=".*m[ai]"]'
-    mi_word = '[(tag="A.*" | tag="P[S8].*" | tag="C[rw].*" | lemma="tři|čtyři") & word=".*mi"]'
-    mi_noun = '[word=".*mi" & tag="N..P7.*"]'
-    query = not_mi_word + '{2}' + mi_word + '{4}' + mi_noun
+    podmet = '[tag="[NPA]..P1...*"]'
+    in_between = '[word!="jsme|jste|by|byste|bychom" & tag!="Z.*"]?'
+    in_between_daleko = '[word!="jsme|jste|by|byste|bychom" & tag!="Vp.*"]'
+    by = '[word="by"]'
+    prisudek = f'[tag="Vp.P....R..A.*" & lemma!="být" & word=".*l{koncovka}"]'
+    not_podmet = '[tag!="[NP]..P1...*"]{3}'
+    # query = podmet + in_between + in_between + by + in_between + in_between + prisudek
+    query = podmet + in_between_daleko + '{4,9}' + prisudek + not_podmet
 
     # 'number_of_concordances_to_fetch' says how many concordances to download. However, it is often more than we want to store as some will be deleted.
     # 'number_of_concordances_to_log' is then the number to appear in the log, it is the final desired number of concordances which will be stored.
-    number_of_concordances_to_fetch = 100
-    number_of_concordances_to_log = 41
+    number_of_concordances_to_fetch = 70
+    number_of_concordances_to_log = 33
 
     # filename (str): filename to write the annotations into. Only the unique name, the prefix "data_zajmena" and the filename extension will be added.
-    filename = "vsema_tema_lidma"
+    filename = f"delal{koncovka}"
     is_target_valid = True
 
     concordances = generate_concordances(corpus_manager, corpus_name, target, variants,
@@ -36,8 +46,9 @@ if __name__ == "__main__":
                                          is_target_code, variants_weights, construct_target_variant_from_code)
 
     # save_concordances_to_file(filename, concordances)
+    save_concordances_to_word(concordances)
 
-    # log_the_query(filename, corpus_name, query, number_of_concordances_to_log, target, variants, is_target_valid)
+    log_the_query(filename, corpus_name, query, number_of_concordances_to_log, target, variants, is_target_valid)
 
     # check(filename)
 
