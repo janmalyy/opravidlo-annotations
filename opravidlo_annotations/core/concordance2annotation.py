@@ -99,20 +99,21 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
             raise ValueError(f"Target variants and weights do not match, they have different length."
                              f"Variants: {len(target_variants)}, Weights: {len(variants_weights)}")
         target_variant = rd.choices(target_variants, variants_weights, k=1)[0]  # [0] is here because choices returns a list, and we want only the string
+    target = target.strip()
     target_ready_to_regexp = rf"{re.escape(target)}"
 
     if construct_target_variant:
         target_variant = construct_target_variant(target, target_variant)
         if is_target_valid:
-            return re.sub(target_ready_to_regexp, f"[*{target_variant}|{target}|corpus*]", sentence, flags=re.IGNORECASE)
+            return re.sub(target_ready_to_regexp, f"[*{target_variant}|{target}|corpus*] ", sentence, flags=re.IGNORECASE)
         else:
-            return re.sub(target_ready_to_regexp, f"[*{target}|{target_variant}|corpus*]", sentence, flags=re.IGNORECASE)
+            return re.sub(target_ready_to_regexp, f"[*{target}|{target_variant}|corpus*] ", sentence, flags=re.IGNORECASE)
 
     else:
         if is_target_valid:
-            return re.sub(target_ready_to_regexp, f"[*{target_variant}|{target}|corpus*]", sentence, flags=re.IGNORECASE)
+            return re.sub(target_ready_to_regexp, f"[*{target_variant}|{target}|corpus*] ", sentence, flags=re.IGNORECASE)
         else:
-            return re.sub(target_ready_to_regexp, f"[*{target}|{target_variant}|corpus*]", sentence, flags=re.IGNORECASE)
+            return re.sub(target_ready_to_regexp, f"[*{target}|{target_variant}|corpus*] ", sentence, flags=re.IGNORECASE)
 
 
 def construct_target_from_code(target_code: str, concordance: str) -> str | None:
@@ -126,7 +127,7 @@ def construct_target_from_code(target_code: str, concordance: str) -> str | None
 
     """
     parts = target_code.split("-")
-    pattern = "".join(rf"\w+{part} " for part in parts).strip()  # this has to be changed sometimes
+    pattern = "".join(rf"\w+{part} " for part in parts)  # this has to be changed sometimes
     match = re.search(pattern, concordance)
     if match:
         return match.group()

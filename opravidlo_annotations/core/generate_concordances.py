@@ -234,5 +234,5 @@ def generate_concordances(corpus_manager: str, corpus_name: str, target: str, va
         concordances = _fetch_sketch_concordances(corpus_name, query, number_of_concordances_to_fetch)
     else:
         raise ValueError(f"Unknown corpus manager: {corpus_manager}. Choose either 'sketch', 'kontext', or 'combo'.")
-
+    print(f"Generated {len(concordances)} concordances.")
     return _process_and_annotate_concordances(concordances, target, variants, is_target_valid, is_target_regexp, variants_weights, construct_target_variant)
