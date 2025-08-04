@@ -127,8 +127,8 @@ def construct_target_from_code(target_code: str, concordance: str) -> str | None
 
     """
     parts = target_code.split("-")
-    pattern = "".join(rf"\w+{part} " for part in parts)  # this has to be changed sometimes
-    match = re.search(pattern, concordance)
+    pattern = "".join(rf" {part}\w+ " for part in parts)  # this has to be changed sometimes
+    match = re.search(pattern, concordance, flags=re.IGNORECASE)
     if match:
         return match.group()
     else:
