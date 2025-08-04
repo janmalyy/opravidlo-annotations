@@ -127,7 +127,7 @@ def construct_target_from_code(target_code: str, concordance: str) -> str | None
 
     """
     parts = target_code.split("-")
-    pattern = "".join(rf" {part}\w+ " for part in parts)  # this has to be changed sometimes
+    pattern = "".join(rf"\w*{part}\w* " for part in parts)  # this has to be changed sometimes
     match = re.search(pattern, concordance, flags=re.IGNORECASE)
     if match:
         return match.group()
@@ -150,7 +150,8 @@ def construct_target_variant_from_code(target: str, target_variant_code:str) -> 
     target_variant_code_parts = target_variant_code.split("-")
     modified_parts = []
     for i in range(len(parts)):
-        part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
+        # part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
+        part = target.replace("býlí", target_variant_code_parts[i])
         modified_parts.append(part)
 
     return " ".join(modified_parts)
