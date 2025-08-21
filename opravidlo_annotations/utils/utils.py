@@ -1,7 +1,10 @@
+import os
 import json
 import re
 
-from opravidlo_annotations.settings import FILES_DIR
+import docx
+
+from opravidlo_annotations.settings import FILES_DIR, DATA_CATEGORY
 
 
 def print_json(data: dict, indent: int = 4) -> None:
@@ -15,7 +18,7 @@ def print_json(data: dict, indent: int = 4) -> None:
     print(json.dumps(data, ensure_ascii=False, indent=indent))
 
 
-def concordances2text(filename: str, concordances: list[str]) -> None:
+def save_concordances_to_file(filename: str, concordances: list[str]) -> None:
     """
     Write concordances to a file. If the file does not exist, it will be created.
     Args:
@@ -23,7 +26,7 @@ def concordances2text(filename: str, concordances: list[str]) -> None:
         concordances: lines to be written to the file
     Returns: None
     """
-    full_filename = FILES_DIR / ("data_zajmena_" + filename + ".txt")
+    full_filename = FILES_DIR / f"{DATA_CATEGORY}_{filename}.txt"
     do_append = True
     if not full_filename.exists():
         do_append = False
@@ -34,6 +37,33 @@ def concordances2text(filename: str, concordances: list[str]) -> None:
             f.write(c + "\n")
 
     print(f"Succesfully wrote {len(concordances)} concordances to {full_filename}.")
+
+
+def save_concordances_to_word(concordances: list[str]) -> None:
+    """
+    Write concordances to the helper docx file.
+
+    Args:
+        concordances: lines to be written to the file
+
+    Returns:
+        None
+    """
+    doc = docx.Document()
+    # Set global style (Normal) to Arial
+    style = doc.styles["Normal"]
+    font = style.font
+    font.name = "Aptos"
+    font.size = docx.shared.Pt(11)
+
+    for c in concordances:
+        doc.add_paragraph(c)
+
+    output_path = FILES_DIR / "word.docx"
+    doc.save(output_path)
+    os.startfile(output_path)
+
+    print(f"Successfully wrote {len(concordances)} concordances to {output_path.name}.")
 
 
 def count_correct_variants_in_json(filename: str) -> tuple[dict, int]:
@@ -110,7 +140,7 @@ def find_duplicates(strings: list[str]) -> tuple[list[str], list[str]]:
     seen = []
     duplicates = []
     for string in strings:
-        if string in seen:
+        if string != "\n" and string in seen:   # we don't want to remove blank lines
             duplicates.append(string)
         else:
             seen.append(string)
@@ -121,7 +151,7 @@ def remove_duplicates(filename: str) -> None:
     """
     Returns: None; it saves the data back to the file without duplicates and prints the duplicates.
     """
-    file_path = FILES_DIR / f"data_zajmena_{filename}.txt"
+    file_path = FILES_DIR / f"{DATA_CATEGORY}_{filename}.txt"
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
     without_duplicates, duplicates = find_duplicates(lines)
@@ -134,3 +164,14 @@ def remove_duplicates(filename: str) -> None:
         print([duplicate for duplicate in duplicates])
     else:
         print("No duplicates found.")
+
+
+def check(filename: str) -> None:
+    """
+    Remove duplicates and then check the proportion of variants and whether the queries
+    (and especially 'number of concordances' variable) are same in the JSON readme and in the real text.
+    """
+    remove_duplicates(filename)
+    print("json: ", count_correct_variants_in_json(FILES_DIR / f"README_{filename}.json"))
+    print("txt: ", count_correct_variants_in_txt(FILES_DIR / f"{DATA_CATEGORY}_{filename}.txt"))
+    print()

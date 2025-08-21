@@ -20,9 +20,11 @@ def log_the_query(filename: str, corpus_name: str, query: str, number_of_concord
         print(f"File {full_filename} does not exist, creating a new one.")
 
     with open(full_filename, "r", encoding="utf-8") as file:
-        data = json.load(file)
+        data = json.load(file, strict=False)    # strict=False mutes some errors regarding the parsing of control chars = those like \n, ', \t...
 
     looking_for = "correct" if is_target_valid else "error"
+    if corpus_name == "combo":
+        corpus_name = "syn2015+syn2013pub+net+parlcorp"
     entry = {
         "query": query,
         "corpus_name": corpus_name,
