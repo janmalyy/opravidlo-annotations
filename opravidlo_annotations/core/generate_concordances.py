@@ -87,7 +87,7 @@ def _fetch_kontext_concordances(corpus_name: str, query: str, number_of_concorda
 
 def _fetch_sketch_concordances(corpus_name: str, query: str, number_of_concordances_to_fetch: int) -> list[str]:
     """
-    Fetch concordances from a Sketch Engine corpus.
+    Fetch concordances from a Sketch Engine corpus. Vary the results by selecting only every forth concordance.
 
     Args:
         corpus_name: The name of the corpus
@@ -102,8 +102,13 @@ def _fetch_sketch_concordances(corpus_name: str, query: str, number_of_concordan
     _check_result_has_lines(result, "sketch", corpus_name)
 
     concordances = []
+    counter = 0
     for line in result["Lines"]:
-        concordances.append(_extract_sketch_text(line))
+        # sketch engine api does not have possibility to shuffle order of concordances, so this ensures at least a bit some variability
+        # it's consequence is that you have to fetch much more concordances
+        if counter % 4 == 0:
+            concordances.append(_extract_sketch_text(line))
+        counter += 1
 
     return concordances
 

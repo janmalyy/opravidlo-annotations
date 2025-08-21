@@ -4,7 +4,7 @@ import re
 
 import docx
 
-from opravidlo_annotations.settings import FILES_DIR
+from opravidlo_annotations.settings import FILES_DIR, DATA_CATEGORY
 
 
 def print_json(data: dict, indent: int = 4) -> None:
@@ -26,7 +26,7 @@ def save_concordances_to_file(filename: str, concordances: list[str]) -> None:
         concordances: lines to be written to the file
     Returns: None
     """
-    full_filename = FILES_DIR / ("data_shoda_" + filename + ".txt")
+    full_filename = FILES_DIR / f"{DATA_CATEGORY}_{filename}.txt"
     do_append = True
     if not full_filename.exists():
         do_append = False
@@ -151,7 +151,7 @@ def remove_duplicates(filename: str) -> None:
     """
     Returns: None; it saves the data back to the file without duplicates and prints the duplicates.
     """
-    file_path = FILES_DIR / f"data_shoda_{filename}.txt"
+    file_path = FILES_DIR / f"{DATA_CATEGORY}_{filename}.txt"
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
     without_duplicates, duplicates = find_duplicates(lines)
@@ -173,5 +173,5 @@ def check(filename: str) -> None:
     """
     remove_duplicates(filename)
     print("json: ", count_correct_variants_in_json(FILES_DIR / f"README_{filename}.json"))
-    print("txt: ", count_correct_variants_in_txt(FILES_DIR / f"data_shoda_{filename}.txt"))
+    print("txt: ", count_correct_variants_in_txt(FILES_DIR / f"{DATA_CATEGORY}_{filename}.txt"))
     print()
