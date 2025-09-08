@@ -3,8 +3,10 @@ import json
 import re
 
 import docx
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
-from opravidlo_annotations.settings import FILES_DIR, DATA_CATEGORY
+from opravidlo_annotations.settings import FILES_DIR, DATA_CATEGORY, OPRAVIDLO_DIR
 
 
 def print_json(data: dict, indent: int = 4) -> None:
@@ -39,6 +41,25 @@ def save_concordances_to_file(filename: str, concordances: list[str]) -> None:
     print(f"Succesfully wrote {len(concordances)} concordances to {full_filename}.")
 
 
+def set_document_language(document: docx.Document(), lang: str = "cs-CZ") -> None:
+    """Set the default language for all text in the document.
+
+    Args:
+        document: A python-docx Document object.
+        lang: Language code (e.g., "cs-CZ" for Czech).
+    """
+    styles = document.styles
+
+    style = styles["Normal"]
+    rpr = style.element.get_or_add_rPr()
+    lang_elem = rpr.find(qn("w:lang"))
+
+    if lang_elem is None:
+        lang_elem = OxmlElement("w:lang")
+        rpr.append(lang_elem)
+
+    lang_elem.set(qn("w:val"), lang)
+
 def save_concordances_to_word(concordances: list[str]) -> None:
     """
     Write concordances to the helper docx file.
@@ -50,16 +71,17 @@ def save_concordances_to_word(concordances: list[str]) -> None:
         None
     """
     doc = docx.Document()
-    # Set global style (Normal) to Arial
     style = doc.styles["Normal"]
     font = style.font
     font.name = "Aptos"
     font.size = docx.shared.Pt(11)
 
+    set_document_language(doc)
+
     for c in concordances:
         doc.add_paragraph(c)
 
-    output_path = FILES_DIR / "word.docx"
+    output_path = OPRAVIDLO_DIR / "opravidlo_annotations" / "files" / "word.docx"
     doc.save(output_path)
     os.startfile(output_path)
 
