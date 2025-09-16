@@ -16,8 +16,8 @@ def correct_punctuation(text: str) -> str:
     three_dots_corrected = re.sub(r'\.\.\.', r'…', text)
     two_spaces_corrected = re.sub(r'  ', r' ', three_dots_corrected)
     dash_corrected = re.sub(r' - ', r' – ', two_spaces_corrected)
-    removed_before = re.sub(r'\s+([.,\]}?!:;“…)+¨«])', r"\1", dash_corrected)
-    removed_after = re.sub(r'([„\[{(»°+])\s+', r"\1", removed_before)
+    removed_before = re.sub(r'\s+([.,\]}?!:;“…)+¨«‘])', r"\1", dash_corrected)
+    removed_after = re.sub(r'([„\[{(»°+‚])\s+', r"\1", removed_before)
     quotation_mark_corrected = re.sub(r'"([ $,.?!])', r"“\1", removed_after)
     quotation_mark_corrected = re.sub(r' "', r" „", quotation_mark_corrected)
     return quotation_mark_corrected
@@ -30,6 +30,7 @@ def remove_left_trailing_chars(sentence: str) -> str:
     from the start of the sentence, the sentence is returned unchanged. - The stopper is set because if there is
     no capital letter in the first 10 chars, it probably indicates that it is a long sentence without
     a start, and we don't want to remove it.
+    Remove also this pattern („ “) from the beginning of the sentence.
 
     Returns: Sentence without left trailing characters.
     """
@@ -39,6 +40,10 @@ def remove_left_trailing_chars(sentence: str) -> str:
     if match:
         start_index = match.start(1)
         return sentence[start_index:]
+    pattern = r'^„ ?“'
+    match = re.search(pattern, sentence)
+    if match:
+        return sentence[match.end():]
     return sentence
 
 
@@ -152,7 +157,7 @@ def construct_target_variant_from_code(target: str, target_variant_code:str) -> 
     target_variant_code_parts = target_variant_code.split("-")
     modified_parts = []
     for i in range(len(parts)):
-        part = re.sub(r"^....", f"{target_variant_code_parts[i]}", parts[i])
+        part = re.sub(r"^.....", f"{target_variant_code_parts[i]}", parts[i])
         # part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
         # part = target.replace("bi", target_variant_code_parts[i])
         modified_parts.append(part)
