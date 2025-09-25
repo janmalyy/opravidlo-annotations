@@ -11,14 +11,17 @@ logging.basicConfig(level=logging.INFO)
 
 def correct_punctuation(text: str) -> str:
     """
-    Corrects punctuation in a string. Corrects the three dots, hyphen to dash and removes any trailing whitespaces before or after the punctuation mark.
+    Corrects punctuation in a string. Corrects multiple typographical details.
     """
     three_dots_corrected = re.sub(r'\.\.\.', r'…', text)
     two_spaces_corrected = re.sub(r'  ', r' ', three_dots_corrected)
-    dash_corrected = re.sub(r' - ', r' – ', two_spaces_corrected)
-    removed_before = re.sub(r'\s+([.,\]}?!:;“"…)¨«])', r"\1", dash_corrected)
-    removed_after = re.sub(r'([„\[{("»°])\s+', r"\1", removed_before)
-    return removed_after
+    li_corrected = re.sub(r' - li', ' -li', two_spaces_corrected)
+    dash_corrected = re.sub(r' - ', r' – ', li_corrected)
+    removed_before = re.sub(r'\s+([.,\]}?!:;“…)+¨«‘])', r"\1", dash_corrected)
+    removed_after = re.sub(r'([„\[{(»°+‚])\s+', r"\1", removed_before)
+    quotation_mark_corrected = re.sub(r'"([ $,.?!])', r"“\1", removed_after)
+    quotation_mark_corrected = re.sub(r' "', r" „", quotation_mark_corrected)
+    return quotation_mark_corrected
 
 
 def remove_left_trailing_chars(sentence: str) -> str:
@@ -28,6 +31,7 @@ def remove_left_trailing_chars(sentence: str) -> str:
     from the start of the sentence, the sentence is returned unchanged. - The stopper is set because if there is
     no capital letter in the first 10 chars, it probably indicates that it is a long sentence without
     a start, and we don't want to remove it.
+    Remove also this pattern („ “) from the beginning of the sentence.
 
     Returns: Sentence without left trailing characters.
     """
@@ -37,6 +41,10 @@ def remove_left_trailing_chars(sentence: str) -> str:
     if match:
         start_index = match.start(1)
         return sentence[start_index:]
+    pattern = r'^„ ?“'
+    match = re.search(pattern, sentence)
+    if match:
+        return sentence[match.end():]
     return sentence
 
 
@@ -64,7 +72,7 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     for i in range(len(sentences)):
         if re.search(r"[”“]", sentences[i]) and not re.search(r"„", sentences[i]):
             sentences[i] = "„" + sentences[i]
-        pattern = rf"{re.escape(target)}"
+        pattern = rf"{re.escape(target.strip())}"
         match = re.search(pattern, sentences[i], flags=re.IGNORECASE)
         if match:
             return remove_left_trailing_chars(sentences[i])
@@ -72,7 +80,7 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     raise ValueError(f"Target word '{target}' not found in concordance: '{concordance}'.")
 
 
-def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[str], is_target_valid:bool,
+def add_annotation_to_sentence(sentence: str, target:str, rest:str, target_variants:list[str], is_target_valid:bool,
                                variants_weights: list[float]= None, construct_target_variant: Callable[[str, str], str]=None) -> str:
     """
     Insert all information for the annotation into the sentence.
@@ -80,6 +88,7 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
     Args:
         sentence: sentence to be annotated
         target: a word or phrase which was mainly looked up in the corpus
+        rest: space or punctuation mark following immediately the target
         target_variants: other possible words or phrases which could occur at the same place as target in the sentence
         is_target_valid: whether the target is orthographically correct or not
         variants_weights: list of weights to change the distribution of variants
@@ -99,41 +108,40 @@ def add_annotation_to_sentence(sentence: str, target:str, target_variants:list[s
             raise ValueError(f"Target variants and weights do not match, they have different length."
                              f"Variants: {len(target_variants)}, Weights: {len(variants_weights)}")
         target_variant = rd.choices(target_variants, variants_weights, k=1)[0]  # [0] is here because choices returns a list, and we want only the string
+    if rest is None:
+        rest = " "
     target = target.strip()
-    target_ready_to_regexp = rf"{re.escape(target)}"
+    target_ready_to_regexp = rf"(?:^| ){re.escape(target)}{re.escape(rest)}"
 
     if construct_target_variant:
         target_variant = construct_target_variant(target, target_variant)
-        if is_target_valid:
-            return re.sub(target_ready_to_regexp, f"[*{target_variant}|{target}|corpus*] ", sentence, flags=re.IGNORECASE)
-        else:
-            return re.sub(target_ready_to_regexp, f"[*{target}|{target_variant}|corpus*] ", sentence, flags=re.IGNORECASE)
 
+    if is_target_valid:
+        return re.sub(target_ready_to_regexp, f" [*{target_variant}|{target}|corpus*]{rest}", sentence, flags=re.IGNORECASE)
     else:
-        if is_target_valid:
-            return re.sub(target_ready_to_regexp, f"[*{target_variant}|{target}|corpus*] ", sentence, flags=re.IGNORECASE)
-        else:
-            return re.sub(target_ready_to_regexp, f"[*{target}|{target_variant}|corpus*] ", sentence, flags=re.IGNORECASE)
+        return re.sub(target_ready_to_regexp, f" [*{target}|{target_variant}|corpus*]{rest}", sentence, flags=re.IGNORECASE)
 
 
-def construct_target_from_code(target_code: str, concordance: str) -> str | None:
+def construct_target_from_code(target_code: str, concordance: str) -> tuple[str, str] | tuple[None, None]:
     """
     Given target_code, create regexp and find the real target in concordance.
 
     Examples:
-         target_code = "mi-mi", concordance = "S tvými kamarádkami nechci mít nic společného." -> "tvými kamarádkami"
+         target_code = "mi-mi", concordance = "S tvými kamarádkami nechci mít nic společného." -> "tvými kamarádkami "
 
-    Returns: Ready to be used target.
+    Returns: Ready to be used target and the rest after the target (space or punctuation mark)
 
     """
     parts = target_code.split("-")
-    pattern = "".join(rf"\w*{part}\w* " for part in parts)  # this has to be changed sometimes
+    pattern = "".join(rf'(?:^| ){part}\w*[^\w]' for part in parts)  # this has to be changed sometimes
     match = re.search(pattern, concordance, flags=re.IGNORECASE)
     if match:
-        return match.group()
+        target = match.group()[:-1]
+        rest = match.group()[-1]
+        return target, rest
     else:
         logging.info(f"Concordance: '{concordance}' does not contain a target: '{target_code}'.")
-        return None
+        return None, None
 
 
 def construct_target_variant_from_code(target: str, target_variant_code:str) -> str:
@@ -150,8 +158,9 @@ def construct_target_variant_from_code(target: str, target_variant_code:str) -> 
     target_variant_code_parts = target_variant_code.split("-")
     modified_parts = []
     for i in range(len(parts)):
+        part = re.sub(r"^......", f"{target_variant_code_parts[i]}", parts[i])
         # part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
-        part = target.replace("býlí", target_variant_code_parts[i])
+        # part = target.replace("bi", target_variant_code_parts[i])
         modified_parts.append(part)
 
     return " ".join(modified_parts)

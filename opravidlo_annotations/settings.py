@@ -10,5 +10,5 @@ SKETCH_ENGINE_TOKEN = os.getenv("SKETCH_ENGINE_TOKEN")
 SKETCH_ENGINE_USERNAME = os.getenv("SKETCH_ENGINE_USERNAME")
 
 OPRAVIDLO_DIR = Path(__file__).parent.parent  # \your\home\directory\opravidlo_annotations\
-FILES_DIR = OPRAVIDLO_DIR / "opravidlo_annotations" / "files"
+FILES_DIR = OPRAVIDLO_DIR / "opravidlo_annotations" / "files" / "vyjm_slova" / "vybít_vybýt"
 DATA_CATEGORY = "data_vyjm_slova"
