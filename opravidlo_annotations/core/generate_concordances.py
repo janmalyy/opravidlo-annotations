@@ -87,7 +87,7 @@ def _fetch_kontext_concordances(corpus_name: str, query: str, number_of_concorda
 
 def _fetch_sketch_concordances(corpus_name: str, query: str, number_of_concordances_to_fetch: int) -> list[str]:
     """
-    Fetch concordances from a Sketch Engine corpus. If there is a lot of concordances, vary the results by selecting only every forth (or second) concordance.
+    Fetch concordances from a Sketch Engine corpus. If there is more than 200 of concordances, vary the results by selecting only every forth (respectively second for 100 to 200 concordances) concordance.
     Sketch engine api does not have the option to shuffle the results, so this is the way to substitute it a bit.
 
     Args:
@@ -104,16 +104,15 @@ def _fetch_sketch_concordances(corpus_name: str, query: str, number_of_concordan
 
     concordances = []
     counter = 0
-
-    if len(result["Lines"]) < 2*number_of_concordances_to_fetch:
+    if len(result["Lines"]) < 100:
         for line in result["Lines"]:
             concordances.append(_extract_sketch_text(line))
         return concordances
 
-    elif len(result["Lines"]) < number_of_concordances_to_fetch:
+    elif len(result["Lines"]) < 200:
         for line in result["Lines"]:
             if counter % 2 == 0:
-                concordances.append(_extract_kontext_text(line))
+                concordances.append(_extract_sketch_text(line))
             counter += 1
         return concordances
 
@@ -180,15 +179,17 @@ def _process_and_annotate_concordances(concordances: list[str], to_be_target: st
                                        construct_target_variant: Callable[[str, str], str] = None) -> list[str]:
     processed_concordances = []
     for concordance in concordances:
+        rest = None
+
         if is_target_regexp:
-            target = construct_target_from_code(to_be_target, concordance)
+            target, rest = construct_target_from_code(to_be_target, concordance)
             if target is None:
                 continue
         else:
             target = to_be_target
 
         concordance = extract_sentence_with_target(concordance, target)
-        concordance = add_annotation_to_sentence(concordance, target, variants, is_target_valid,
+        concordance = add_annotation_to_sentence(concordance, target, rest, variants, is_target_valid,
                                                  variants_weights, construct_target_variant)
         concordance = correct_punctuation(concordance)
         processed_concordances.append(concordance)

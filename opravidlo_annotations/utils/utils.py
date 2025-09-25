@@ -123,7 +123,7 @@ def count_correct_variants_in_json(filename: str) -> tuple[dict, int]:
 
 def count_correct_variants_in_txt(filename: str) -> tuple[dict, int]:
     """
-    Counts occurrences of bracketed variant expressions in a text file.
+    Counts occurrences of bracketed variant expressions (e.g.[*vybyla|vybila|corpus*]),  in a text file.
 
     Args:
         filename (str): Path to the text file.
