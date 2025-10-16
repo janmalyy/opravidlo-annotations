@@ -1,4 +1,5 @@
 import random as rd
+import re
 from collections.abc import Callable
 
 import requests
@@ -187,6 +188,12 @@ def _process_and_annotate_concordances(concordances: list[str], to_be_target: st
                 continue
         else:
             target = to_be_target
+            try:
+                end_index = re.search(target, concordance, flags=re.IGNORECASE).end()
+                rest = concordance[end_index]
+            except AttributeError as e:
+                raise AttributeError("You probably have wrongly set query and/or target. Check it.", e)
+
 
         concordance = extract_sentence_with_target(concordance, target)
         concordance = add_annotation_to_sentence(concordance, target, rest, variants, is_target_valid,

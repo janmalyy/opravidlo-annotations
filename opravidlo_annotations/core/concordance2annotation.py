@@ -117,9 +117,9 @@ def add_annotation_to_sentence(sentence: str, target:str, rest:str, target_varia
         target_variant = construct_target_variant(target, target_variant)
 
     if is_target_valid:
-        return re.sub(target_ready_to_regexp, f" [*{target_variant}|{target}|corpus*]{rest}", sentence, flags=re.IGNORECASE)
+        return re.sub(target_ready_to_regexp, f" [*{target_variant}|{target}|corpus*]{rest}", sentence, flags=re.IGNORECASE).strip()
     else:
-        return re.sub(target_ready_to_regexp, f" [*{target}|{target_variant}|corpus*]{rest}", sentence, flags=re.IGNORECASE)
+        return re.sub(target_ready_to_regexp, f" [*{target}|{target_variant}|corpus*]{rest}", sentence, flags=re.IGNORECASE).strip()
 
 
 def construct_target_from_code(target_code: str, concordance: str) -> tuple[str, str] | tuple[None, None]:
@@ -158,7 +158,7 @@ def construct_target_variant_from_code(target: str, target_variant_code:str) -> 
     target_variant_code_parts = target_variant_code.split("-")
     modified_parts = []
     for i in range(len(parts)):
-        part = re.sub(r"^......", f"{target_variant_code_parts[i]}", parts[i])
+        part = re.sub(r"^.....", f"{target_variant_code_parts[i]}", parts[i])
         # part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
         # part = target.replace("bi", target_variant_code_parts[i])
         modified_parts.append(part)
