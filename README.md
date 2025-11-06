@@ -1,80 +1,110 @@
-# opravidlo annotations
+# Opravidlo Annotations
 
-### TODO pro vás:
-1. mít github účet
-2. naklonovat k sobě tento repozitář
-3. vygenerovat si přístupové tokeny pro Kontext a Sketch Engine API a vložit je do souboru `.env` 
-4. vytvořit virtuální prostředí a nainstalovat requirements
-5. vyzkoušet si s tím pracovat. Stačí měnit parametry v `main.py`, zbytek by nemělo být potřeba řešit.
+A tool for generating and annotating Czech language examples for training a grammar checker Opravidlo 2.0.
 
+## Project Overview
 
-### Disclaimery
-- Ultimátní rada nad zlato: Když nevím, zeptám se ChatGPT:))
-- Možná něco popisuju moc podrobně a něco málo, pardon... Nevím, co víte... A možná je to zmatený. Kdyžtak návodů na netu je k tomu fakt spousta. Nebo se ptejte.
+Opravidlo Annotations is designed to help create annotated examples of Czech language phenomena by:
 
-### Git
-- https://www.w3schools.com/git/git_intro.asp?remote=github
-- Git je nástroj pro správu verzí kódu. GitHub je webová služba, která hostuje projekty spravované pomocí Gitu.
-- Používá se to pro to, aby mohlo více lidí spolupracovat na jednom projektu současně. A taky aby si člověk udržoval přehled nad verzemi kódu - třeba když něco pokazím, tak se můžu vrátit ke starší verzi.
-- `git clone https://github.com/janmalyy/opravidlo-annotations.git` mi naklonuje tento projekt do mého PC lokálně.
-- Workflow je takové, že přidávám nové features a věci v jiné větvi, postupně commituju a pushuju a až mám tu svou část hotovou, udělám pull request do main větve.
-- Commity a pull request srozumitelně a detailně popisuju.
-- (Defaultní větev je `main`.)
-- Takže postup je zhruba takový:
-  - `git checkout -b <název větve` - vytvoří novou větev a přepne mě do ní
-  - píšu kód, něco dokončím a pak:
-  - `git status` mi ukáže, které soubory jsem změnil
-  - pomocí `git add název_souboru další_název_souboru a_tak `přidám soubory ke commitnutí
-  - nebo použiju `git add --all` - přidá všechno
-  - `git commit -m "zpráva popisující moje změny"` - commitnu změnu
-  - `git push` - nahraju změnu na github, kde ji pak uvidí i zbytek
-- změny z remote k sobě si stáhnu pomocí příkazu `git pull`. Je fajn ho průběžně pouštět, abych měl vždy u sebe aktuální kód. 
-- (Běžný IDE jako VSCode nebo PyCharm mají práci s gitem integrovanou do sebe, dá se to dělat přímo v tom klikáním. Oboje funguje.)
-- Občas tam člověk něco pokazí (např. nahraje na github něco, co nechtěl) - dá se to ale vrátit zpátky, jen je potřeba být opatrný. Tahle stránka je fajn: https://kodekloud.com/blog/git-uncommit-last-commit/
+1. Fetching concordances (text examples) from corpus query systems (Kontext and Sketch Engine)
+2. Processing these examples to extract relevant sentences
+3. Annotating the sentences to highlight specific language phenomena
+4. Saving the annotated examples in text and Word formats with accompanying logs of queries
 
+## Code Structure
 
-### Project code organization rules
-- Všechen kód patří do balíčku `opravidlo_annotations`, mimo to je jen readme, requirements a gitignore.
-- Všechno v kódu je anglicky.
-- Kód je logicky dělený do souborů a funkcí, funkce mají dokumentaci.
-- Spustitelný kód je jenom pod `if __name__ == "__main__":`
+The project is organized into several modules:
 
+### Core Modules
+- `main.py`: The entry point for the application, containing configuration for queries
+- `core/generate_concordances.py`: Handles fetching concordances from corpus query systems
+- `core/concordance2annotation.py`: Processes concordances and adds annotations
 
-### Virtual environment and dependencies
-- https://www.freecodecamp.org/news/how-to-setup-virtual-environments-in-python/
-- Obecně je fajn pro každý projekt mít vlastní virtuální prostředí - takovou krabičku, kde jsou uložené všechny knihovny k tomu projektu. Nemísí se to tak s dalšími projekty. Když pak končím projekt, můžu celou složku smazat a vím, že mi to nenaruší nic dalšího. Zároveň tak můžu mít třeba více verzí pythonu k různým projektům. Ne že by se nás tohle asi nějak extra týkalo, ale je to prostě best practise.
-- V shellu se dostanu do složky s projektem a tam je potřeba zadat pro vytvoření toho virt. prostředí:
+### API Modules
+- `api/kontext.py`: Interface for the Kontext corpus query system
+- `api/sketch_engine.py`: Interface for the Sketch Engine corpus query system
+
+### Utility Modules
+- `utils/utils.py`: General utility functions for file handling and text processing
+- `utils/query_logs.py`: Functions for logging queries and generating documentation
+
+### Configuration
+- `settings.py`: Contains configuration settings, including API tokens and file paths
+
+## How to Use
+
+### Prerequisites
+1. Install the required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+2. Set up environment variables for API access:
+   - Create a `.env` file in the project root
+   - Add your API tokens:
+     ```
+     KONTEXT_TOKEN=your_kontext_token
+     SKETCH_ENGINE_TOKEN=your_sketch_engine_token
+     SKETCH_ENGINE_USERNAME=your_sketch_engine_username
+     ```
+
+### Basic Usage
+
+1. Configure your query in `main.py`:
+   ```python
+   # Set corpus manager and corpus name
+   corpus_manager = "kontext"  # Options: "kontext", "sketch", "combo"
+   corpus_name = "syn2020"     # Corpus name depends on the manager
+   
+   # Define target word and its variants
+   target = "jejích"
+   variants = ["jejich"]
+   is_target_valid = False  # Is the target orthographically correct?
+   
+   # Define the corpus query
+   query = '[lemma="jejích" & tag=".*"]'
+   
+   # Set number of concordances to fetch
+   number_of_concordances_to_fetch = 80
+   number_of_concordances_to_log = 10
+   
+   # Set output filename
+   filename = "jejích_jejich"
+   ```
+
+2. Run the script:
+   ```
+   python -m opravidlo_annotations.main
+   ```
+
+3. The script will:
+   - Fetch concordances from the specified corpus
+   - Process and annotate the concordances
+   - Save the results to text and Word files
+   - Generate documentation of queries in JSON and text formats
+
+### Output Format
+
+The annotated sentences will be in the format:
 ```
-pip install virtualenv
-python3 -m venv venv # první venv je příkaz, druhé venv je název tohoto konkrétního vrituálního prostředí
-# vytvoří to složku venv
+Beginning of the sentence [*error|correct|corpus*] rest of the sentence.
 ```
-- A pak vždycky, než instaluju nové knihovny, tak to virtuální prostředí aktivuji takto (pro windows):
-```
-source venv/Scripts/activate
-```
-- pro linuxové systémy takto: `source venv/bin/activate`; a mac to má ještě asi trochu jinak :D
-- že je aktivované, pak uvidím vždy na začátku řádku v shellu jako `(.venv)`
-- příkaz `deactivate` zruší virtuální prostředí
-- na začátek je fajn instalovat všechny knihovny a to pomocí
-```
-pip install -r requirements.txt
-```
-- Když nějakou knihovnu přidávám, tak ji napíšu do souboru `requirements.txt` - tam se udržuje seznam knihoven, co se používá.
 
-### Environment variables (proměnné prostředí)
-- Hesla a přístupové klíče a tokeny není fajn dávat na github. Protože je pak může použít kdokoliv jiný - lepší je, když má každý svůj přístup. Je to prostě bezpečnostní best-practise, i když v tomto konkrétním případě zas o tolik nejde.
-- Pro nás se to týká přístupových tokenů k API Kontextu a Sketch Engine.
-- Je potřeba, abyste si ve složce `opravidlo_annotations` vytvořily soubor `.env` a do něj vložily klíče ke kontext a sketch engine API a sketch engine username.
-
-V tady takovém formátu:
+For example:
 ```
-KONTEXT_TOKEN="random_mess_of_digits_and_letters"
-SKETCH_ENGINE_TOKEN="random_mess_of_digits_and_letters"
-SKETCH_ENGINE_USERNAME="your_username"
-``` 
+Stál před [*jejích|jejich|corpus*] chalupou.
+```
 
-- V souboru `settings.py` se pak ty klíče od vás nahrají pomocí `os.getenv("...")` do proměnných a ty proměnné se pak používají dál.
-- Soubor `.env` je v `.gitignore` (= seznam věcí, co se nemají nahrát na git), takže se nikdy nenahraje na git a takto se zajistí, že všichni můžeme použít ten stejný kód, ale každý se svým přístupem a nesdílíme ho veřejně.
+### Additional features
 
+- Use the `combo` corpus manager to fetch examples from multiple corpora
+- Customize annotation format by modifying the `add_annotation_to_sentence` function
+- Create custom target variant constructors for complex language phenomena
 
+## Example Workflow
+
+1. Set up a query for a specific language phenomenon
+2. Run the script to generate annotated examples
+3. Review the examples in the generated text or Word files
+4. Use the check function to verify the distribution of variants
+5. Use the generated examples as training data for Opravidlo 2.0
