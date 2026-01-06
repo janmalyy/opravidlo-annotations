@@ -15,7 +15,7 @@ def correct_punctuation(text: str) -> str:
     """
     three_dots_corrected = re.sub(r'\.\.\.', r'…', text)
     two_spaces_corrected = re.sub(r'  ', r' ', three_dots_corrected)
-    li_corrected = re.sub(r' - li', ' -li', two_spaces_corrected)
+    li_corrected = re.sub(r' - li', '-li', two_spaces_corrected)
     dash_corrected = re.sub(r' - ', r' – ', li_corrected)
     removed_before = re.sub(r'\s+([.,\]}?!:;“…)+¨«‘])', r"\1", dash_corrected)
     removed_after = re.sub(r'([„\[{(»°+‚])\s+', r"\1", removed_before)
@@ -80,11 +80,12 @@ def extract_sentence_with_target(concordance: str, target: str) -> str|None:
     raise ValueError(f"Target word '{target}' not found in concordance: '{concordance}'.")
 
 
-def add_annotation_to_sentence(sentence: str, target:str, rest:str, target_variants:list[str], is_target_valid:bool,
+def add_annotation_to_sentence(sentence: str, target: str, rest: str, target_variants: list[str], is_target_valid: bool,
                                variants_weights: list[float]= None, construct_target_variant: Callable[[str, str], str]=None) -> str:
     """
     Insert all information for the annotation into the sentence.
     If there are multiple variants of the target, one variant is chosen randomly.
+    Preserves the case of the target from the original sentence.
     Args:
         sentence: sentence to be annotated
         target: a word or phrase which was mainly looked up in the corpus
@@ -105,21 +106,34 @@ def add_annotation_to_sentence(sentence: str, target:str, rest:str, target_varia
         target_variant = rd.choice(target_variants)
     else:
         if len(target_variants) != len(variants_weights):
-            raise ValueError(f"Target variants and weights do not match, they have different length."
-                             f"Variants: {len(target_variants)}, Weights: {len(variants_weights)}")
-        target_variant = rd.choices(target_variants, variants_weights, k=1)[0]  # [0] is here because choices returns a list, and we want only the string
+            raise ValueError("Target variants and weights do not match.")
+        target_variant = rd.choices(target_variants, variants_weights, k=1)[0]
+
     if rest is None:
-        rest = " "
-    target = target.strip()
-    target_ready_to_regexp = rf"(?:^| ){re.escape(target)}{re.escape(rest)}"
+        rest = ""
 
-    if construct_target_variant:
-        target_variant = construct_target_variant(target, target_variant)
+    target_clean = target.strip()
+    pattern = rf"({re.escape(target_clean)}){re.escape(rest)}"
 
-    if is_target_valid:
-        return re.sub(target_ready_to_regexp, f" [*{target_variant}|{target}|corpus*]{rest}", sentence, flags=re.IGNORECASE).strip()
-    else:
-        return re.sub(target_ready_to_regexp, f" [*{target}|{target_variant}|corpus*]{rest}", sentence, flags=re.IGNORECASE).strip()
+    def replace_callback(match):
+        actual_word_in_sentence = match.group(1)
+
+        current_variant = target_variant
+        if construct_target_variant:
+            current_variant = construct_target_variant(actual_word_in_sentence, target_variant)
+
+        final_target = actual_word_in_sentence
+        final_variant = current_variant
+
+        if actual_word_in_sentence.istitle():
+            final_variant = current_variant.capitalize()
+
+        if is_target_valid:
+            return f" [*{final_variant}|{final_target}|corpus*]{rest}"
+        else:
+            return f" [*{final_target}|{final_variant}|corpus*]{rest}"
+
+    return re.sub(pattern, replace_callback, sentence, flags=re.IGNORECASE).strip()
 
 
 def construct_target_from_code(target_code: str, concordance: str) -> tuple[str, str] | tuple[None, None]:
