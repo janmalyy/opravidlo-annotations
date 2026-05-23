@@ -158,7 +158,7 @@ def construct_target_from_code(target_code: str, concordance: str) -> tuple[str,
         return None, None
 
 
-def construct_target_variant_from_code(target: str, target_variant_code:str) -> str:
+def construct_target_variant_from_code(target: str, target_variant_code: str) -> str:
     """
     Replace the last character of each word in target with a corresponding character in the target_variant.
 
@@ -168,11 +168,22 @@ def construct_target_variant_from_code(target: str, target_variant_code:str) -> 
     Returns:
         Ready to be used target variant.
     """
+    # if target[0] == "z":
+    #     return "s" + target[1:]
+    # elif target[0] == "Z":
+    #     return "S" + target[1:]
+    # elif target[0] == "s":
+    #     return "z" + target[1:]
+    # elif target[0] == "S":
+    #     return "Z" + target[1:]
+    # else:
+    #     raise ValueError(f"Target: '{target}' is not a valid target.")
     parts = target.strip().split(" ")
     target_variant_code_parts = target_variant_code.split("-")
     modified_parts = []
+    # dots = "."*(len(target))
     for i in range(len(parts)):
-        part = re.sub(r"^.....", f"{target_variant_code_parts[i]}", parts[i])
+        part = re.sub(rf"^.....", f"{target_variant_code_parts[i]}", parts[i])
         # part = re.sub(r"(\w)(?=\b)", f"{target_variant_code_parts[i]}", parts[i])       # this has to be changed sometimes
         # part = target.replace("bi", target_variant_code_parts[i])
         modified_parts.append(part)
